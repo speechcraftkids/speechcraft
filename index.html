@@ -7,7 +7,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>SpeechCraft</title>
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Crect width='180' height='180' fill='%235fb04a'/%3E%3Crect y='120' width='180' height='60' fill='%238a5a2b'/%3E%3Crect x='60' y='40' width='60' height='60' fill='%234fd6d6'/%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="application-name" content="SpeechCraft">
+<meta name="apple-mobile-web-app-title" content="SpeechCraft">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -328,6 +332,16 @@
   .trophyshelf{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
     background:rgba(0,0,0,.2);border:3px solid rgba(0,0,0,.35);border-radius:10px;padding:10px;}
   .trophyshelf .tr{font-size:clamp(24px,6vw,36px);line-height:1;}
+
+  /* ===== PIXEL BLOCKS (Minecraft-style textured voxels, no image files) ===== */
+  .mcb{width:100%;height:100%;display:block;image-rendering:pixelated;}
+  .revealgrid .rc,.bgrid8 .bc,.target8 .tc,.galgrid div{padding:0;overflow:hidden;}
+  .revealgrid .rc .mcb,.bgrid8 .bc .mcb,.target8 .tc .mcb,.galgrid div .mcb,.pal .sw .mcb{border-radius:2px;}
+  .pal .sw{overflow:hidden;padding:3px;}
+  .pal .sw .mcb{width:clamp(26px,7vw,38px);height:clamp(26px,7vw,38px);}
+  .wplot{position:relative;padding:0;border:2px solid #3d6b28;overflow:hidden;background:#5c9e3c;}
+  .wplot .grassbg{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;}
+  .wplot .wstruct{position:relative;z-index:2;filter:drop-shadow(0 2px 0 rgba(0,0,0,.28));}
 </style>
 </head>
 <body>
@@ -1348,6 +1362,65 @@ function tapWord(){
 
 /* ================= BUILD: COLORS + SANDBOX + PUZZLES + GALLERY ================= */
 const COLORS={R:'🟥',O:'🟧',Y:'🟨',G:'🟩',B:'🟦',P:'🟪',K:'⬛',W:'⬜',N:'🟫'};
+
+/* ===== PIXEL-BLOCK RENDERER: turns each color into a textured Minecraft-style block =====
+   Principles (from Minecraft texture style guides): 16x16 grid, light from top-LEFT,
+   one highlight + one shadow (hue-shifted), a little INTENTIONAL texture (not random noise),
+   hard pixels (crispEdges). */
+const BLOCK={
+  '🟥':{b:'#c23b2f',l:'#e6604d',d:'#7f2019',t:'speckle'},
+  '🟧':{b:'#e07d2c',l:'#f6a950',d:'#984710',t:'speckle'},
+  '🟨':{b:'#f1c531',l:'#ffe98a',d:'#b3820d',t:'gem'},
+  '🟩':{b:'#57a83f',l:'#82cd5c',d:'#356523',t:'speckle'},
+  '🟦':{b:'#3f9fe3',l:'#84cdf5',d:'#205f92',t:'gem'},
+  '🟪':{b:'#9159d4',l:'#bd8fed',d:'#5b3193',t:'speckle'},
+  '⬛':{b:'#23212e',l:'#3d3854',d:'#0b0a11',t:'speckle'},
+  '⬜':{b:'#e9edf3',l:'#ffffff',d:'#b6bfca',t:'plain'},
+  '🟫':{b:'#8a5a2b',l:'#ab763d',d:'#5b3819',t:'grain'}
+};
+const SPKL_D=[[4,3],[9,4],[12,6],[6,7],[11,10],[4,11],[8,12],[13,12],[2,8]];
+const SPKL_L=[[6,3],[10,7],[3,6],[12,3],[5,10],[9,9],[13,9]];
+const GEM_L=[[5,4],[5,5],[5,6],[4,5],[6,5],[11,10],[10,10],[11,9],[8,3],[12,6],[3,10]];
+const GEM_D=[[12,12],[11,13],[13,11],[9,12],[13,4]];
+const GRN_D=[[4,1],[4,14],[10,1],[10,14],[12,8],[12,9],[2,5]];
+const GRN_L=[[7,1],[7,14],[13,3]];
+function _r(x,y,w,h,c){ return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="'+c+'"/>'; }
+function _px(list,c){ let s=''; for(let i=0;i<list.length;i++){ s+=_r(list[i][0],list[i][1],1,1,c); } return s; }
+const _blkCache={};
+function blockSVG(emoji){
+  if(_blkCache[emoji]!==undefined) return _blkCache[emoji];
+  const m=BLOCK[emoji]; if(!m){ _blkCache[emoji]=null; return null; }
+  let p=_r(0,0,16,16,m.b);
+  // bevel: light on top + left, shadow on bottom + right (light from top-left)
+  p+=_r(0,0,16,1,m.l)+_r(0,0,1,16,m.l);
+  p+=_r(0,15,16,1,m.d)+_r(15,0,1,16,m.d);
+  p+=_r(15,0,1,1,m.b)+_r(0,15,1,1,m.b); // soften opposite corners
+  if(m.t==='speckle'){ p+=_px(SPKL_D,m.d)+_px(SPKL_L,m.l); }
+  else if(m.t==='gem'){ p+=_px(GEM_D,m.d)+_px(GEM_L,m.l); }
+  else if(m.t==='grain'){
+    p+=_r(4,1,1,14,m.d)+_r(10,1,1,14,m.d)+_r(7,1,1,14,m.l); p+=_px([[12,8],[12,9],[2,5],[13,12]],m.d);
+  }
+  const svg='<svg class="mcb" viewBox="0 0 16 16" shape-rendering="crispEdges" preserveAspectRatio="none">'+p+'</svg>';
+  _blkCache[emoji]=svg; return svg;
+}
+/* renders a stored cell value as a block if it's a color, else the raw emoji (for structures) */
+function cellFill(v){ if(!v) return ''; return blockSVG(v)||('<span style="font-size:0.86em;line-height:1;">'+v+'</span>'); }
+/* grass-block texture for the World plots */
+let _grassSVG=null;
+function grassBlockSVG(){
+  if(_grassSVG) return _grassSVG;
+  const gTop='#6fbf45',gTopL='#8fd862',gTopD='#4f9330',dirt='#8a5a2b',dirtL='#a9743c',dirtD='#5b3819';
+  let p=_r(0,0,16,6,gTop)+_r(0,6,16,10,dirt);
+  p+=_r(0,0,16,1,gTopL);                         // sunlit grass top
+  p+=_r(0,5,16,1,gTopD);                          // grass/dirt seam
+  p+=_px([[2,2],[5,1],[9,2],[12,1],[14,3],[7,3]],gTopL); // grass blades
+  p+=_px([[4,8],[10,9],[6,12],[12,11],[3,13],[9,7],[13,13]],dirtD); // dirt speckle
+  p+=_px([[7,9],[11,12],[4,11]],dirtL);
+  p+=_r(0,6,16,1,dirtL);
+  p+=_r(0,15,16,1,dirtD)+_r(15,6,1,10,dirtD);     // shadow edges
+  _grassSVG='<svg class="grassbg" viewBox="0 0 16 16" shape-rendering="crispEdges" preserveAspectRatio="none">'+p+'</svg>';
+  return _grassSVG;
+}
 const PATTERNS=[
   {id:'heart',name:'❤️ Heart',rows:[".RR..RR.","RRRRRRRR","RRRRRRRR","RRRRRRRR",".RRRRRR.","..RRRR..","...RR...","........"]},
   {id:'creeper',name:'👾 Creeper',rows:["GGGGGGGG","GGGGGGGG","GKKGGKKG","GKKGGKKG","GGGKKGGG","GGKKKKGG","GGKKKKGG","GGKGGKGG"]},
@@ -1364,15 +1437,15 @@ const PATTERNS=[
 let sbSel='🟩';
 function renderBase(){
   const pal=document.getElementById('hotbar'); if(pal){ pal.className="pal"; pal.innerHTML="";
-    Object.keys(COLORS).forEach(k=>{ const sw=document.createElement('div'); sw.className="sw"+(COLORS[k]===sbSel?' sel':''); sw.textContent=COLORS[k];
+    Object.keys(COLORS).forEach(k=>{ const sw=document.createElement('div'); sw.className="sw"+(COLORS[k]===sbSel?' sel':''); sw.innerHTML=cellFill(COLORS[k]);
       sw.onclick=()=>{ sbSel=COLORS[k]; document.querySelectorAll('#hotbar .sw').forEach(x=>x.classList.remove('sel')); sw.classList.add('sel'); };
       pal.appendChild(sw); }); }
   const grid=document.getElementById('basegrid'); if(grid){ grid.className="bgrid8"; grid.innerHTML="";
-    for(let idx=0;idx<64;idx++){ const c=document.createElement('div'); c.className="bc"; c.textContent=S.base[idx]||"";
+    for(let idx=0;idx<64;idx++){ const c=document.createElement('div'); c.className="bc"; c.innerHTML=cellFill(S.base[idx]);
       c.onclick=()=>{
-        if(S.base[idx]){ delete S.base[idx]; c.textContent=""; S.blockBank=(S.blockBank||0)+1; sfx('place'); save(); setW('baseBlocks',S.blockBank||0); return; }
+        if(S.base[idx]){ delete S.base[idx]; c.innerHTML=""; S.blockBank=(S.blockBank||0)+1; sfx('place'); save(); setW('baseBlocks',S.blockBank||0); return; }
         if((S.blockBank||0)<=0){ toast("🎤 Say words in the games to earn blocks to build!"); return; }
-        S.base[idx]=sbSel; c.textContent=sbSel; S.blockBank=(S.blockBank||0)-1; sfx('place'); save(); setW('baseBlocks',S.blockBank||0);
+        S.base[idx]=sbSel; c.innerHTML=cellFill(sbSel); S.blockBank=(S.blockBank||0)-1; sfx('place'); save(); setW('baseBlocks',S.blockBank||0);
       };
       grid.appendChild(c); } }
   setW('baseBlocks',S.blockBank||0);
@@ -1388,7 +1461,7 @@ function renderPuzzleList(){
     const done=S.stats.puzzles[p.id];
     const c=document.createElement('div'); c.className="card puzcard";
     let mini='<div class="target8" style="grid-template-columns:repeat(8,9px);">';
-    p.rows.forEach(r=>{ for(const ch of r){ mini+='<div class="tc" style="width:9px;height:9px;font-size:8px;line-height:9px;">'+(ch==='.'?'':COLORS[ch])+'</div>'; } });
+    p.rows.forEach(r=>{ for(const ch of r){ mini+='<div class="tc" style="width:9px;height:9px;font-size:8px;line-height:9px;">'+cellFill(ch==='.'?'':COLORS[ch])+'</div>'; } });
     mini+='</div>';
     c.innerHTML='<h2 style="font-size:clamp(15px,3vw,20px);">'+p.name+(done?' ✅':'')+'</h2>'+mini;
     const b=document.createElement('button'); b.className="btn gold small"; b.style.marginTop="8px"; b.textContent="🎤 Build by talking!";
@@ -1399,17 +1472,17 @@ function startPuzzle(i){
   PZ.pat=PATTERNS[i]; PZ.cur={}; PZ.sel='🟥';
   setW('puzTitle', PZ.pat.name);
   const t=document.getElementById('puzTarget'); t.innerHTML="";
-  PZ.pat.rows.forEach(r=>{ for(const ch of r){ const d=document.createElement('div'); d.className="tc"; d.textContent=(ch==='.'?'':COLORS[ch]); t.appendChild(d); } });
+  PZ.pat.rows.forEach(r=>{ for(const ch of r){ const d=document.createElement('div'); d.className="tc"; d.innerHTML=cellFill(ch==='.'?'':COLORS[ch]); t.appendChild(d); } });
   const used=[]; PZ.pat.rows.forEach(r=>{for(const ch of r){ if(ch!=='.' && used.indexOf(ch)<0) used.push(ch);}});
   ['R','O','Y','G','B','P','K','W','N'].forEach(k=>{ if(used.indexOf(k)<0 && used.length<8) used.push(k); });
   PZ.sel=COLORS[used[0]];
   const pal=document.getElementById('puzPal'); pal.innerHTML="";
-  used.forEach(k=>{ const sw=document.createElement('div'); sw.className="sw"+(COLORS[k]===PZ.sel?' sel':''); sw.textContent=COLORS[k];
+  used.forEach(k=>{ const sw=document.createElement('div'); sw.className="sw"+(COLORS[k]===PZ.sel?' sel':''); sw.innerHTML=cellFill(COLORS[k]);
     sw.onclick=()=>{ PZ.sel=COLORS[k]; document.querySelectorAll('#puzPal .sw').forEach(x=>x.classList.remove('sel')); sw.classList.add('sel'); };
     pal.appendChild(sw); });
   const g=document.getElementById('puzGrid'); g.innerHTML="";
   for(let idx=0;idx<64;idx++){ const c=document.createElement('div'); c.className="bc"; c.dataset.i=idx;
-    c.onclick=()=>{ if(PZ.cur[idx]===PZ.sel){ delete PZ.cur[idx]; c.textContent=""; } else { PZ.cur[idx]=PZ.sel; c.textContent=PZ.sel; } sfx('place'); };
+    c.onclick=()=>{ if(PZ.cur[idx]===PZ.sel){ delete PZ.cur[idx]; c.innerHTML=""; } else { PZ.cur[idx]=PZ.sel; c.innerHTML=cellFill(PZ.sel); } sfx('place'); };
     g.appendChild(c); }
   go('puzzle');
 }
@@ -1434,7 +1507,7 @@ function renderGallery(){
   S.creations.slice().reverse().forEach(cr=>{
     const item=document.createElement('div'); item.className="galitem";
     let html='<div class="galgrid">';
-    for(let idx=0;idx<64;idx++){ html+='<div>'+(cr.cells[idx]||'')+'</div>'; }
+    for(let idx=0;idx<64;idx++){ html+='<div>'+cellFill(cr.cells[idx])+'</div>'; }
     html+='</div><div class="tiny" style="margin-top:6px;">'+(cr.name||'Build')+'</div>';
     item.innerHTML=html; g.appendChild(item);
   });
@@ -1481,7 +1554,7 @@ function startReveal(patId, diff){
 }
 function renderReveal(){
   const g=document.getElementById('revealGrid'); if(!g) return; g.innerHTML="";
-  for(let idx=0;idx<64;idx++){ const c=document.createElement('div'); c.className="rc"+(REVEAL.cur[idx]?' shown':''); c.textContent=REVEAL.cur[idx]||''; g.appendChild(c); }
+  for(let idx=0;idx<64;idx++){ const c=document.createElement('div'); c.className="rc"+(REVEAL.cur[idx]?' shown':''); c.innerHTML=cellFill(REVEAL.cur[idx]); g.appendChild(c); }
   setW('revealLabel', REVEAL.pat? ('Build the '+REVEAL.pat.name+'   ('+REVEAL.done+'/'+REVEAL.order.length+')') : '');
 }
 function revealStep(){
@@ -1562,7 +1635,7 @@ function renderWorld(){
   const grid=document.getElementById('worldGrid'); if(grid){ grid.innerHTML="";
     for(let i=0;i<WORLD_PLOTS;i++){
       const cell=document.createElement('div'); const sid=S.world.plots[i]; const st=sid?structById(sid):null;
-      cell.className="wplot"+(st?" filled":""); cell.textContent=st?st.emoji:"";
+      cell.className="wplot"+(st?" filled":""); cell.innerHTML=grassBlockSVG()+(st?'<span class="wstruct">'+st.emoji+'</span>':'');
       cell.onclick=(function(idx){ return function(){ worldPlot(idx); }; })(i);
       grid.appendChild(cell);
     }
@@ -2017,6 +2090,12 @@ autoConnectCloud();
 function warmup1(){try{window.speechSynthesis.getVoices();}catch(e){} try{ac();}catch(e){} if(S.music!==false){ try{musStart();}catch(e){} }}
 document.body.addEventListener('touchend',warmup1,{once:true});
 document.body.addEventListener('mousedown',warmup1,{once:true});
+</script>
+<script>
+/* PWA: register the offline service worker (no-op on file:// or unsupported browsers) */
+if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
+  window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
+}
 </script>
 </body>
 </html>
