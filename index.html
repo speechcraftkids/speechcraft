@@ -333,6 +333,14 @@
     background:rgba(0,0,0,.2);border:3px solid rgba(0,0,0,.35);border-radius:10px;padding:10px;}
   .trophyshelf .tr{font-size:clamp(24px,6vw,36px);line-height:1;}
 
+  /* ===== CO-PLAY: grown-up "was it clear?" tap + session feedback ===== */
+  .claritybox{background:linear-gradient(180deg,#2f5fa0,#1b3a66);border:3px solid rgba(0,0,0,.4);border-radius:14px;padding:12px;margin:10px 0;animation:pop .2s;}
+  .clarityq{text-align:center;font-size:clamp(13px,2.5vw,18px);font-weight:700;margin-bottom:8px;}
+  .clarityrow{display:flex;gap:10px;} .clarityrow .btn{flex:1;}
+  .fbfaces{display:flex;justify-content:center;gap:16px;margin:8px 0;}
+  .fbface{font-size:clamp(46px,12vw,72px);cursor:pointer;filter:grayscale(.35);transition:transform .1s,filter .1s;}
+  .fbface:active{transform:scale(1.2);} .fbface.pick{filter:none;transform:scale(1.15);}
+
   /* ===== ADVENTURE (pet + levels + boss) ===== */
   .advpanel{background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(0,0,0,.28));border:3px solid rgba(0,0,0,.4);border-radius:14px;padding:12px;margin-bottom:12px;}
   .advtop{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
@@ -564,9 +572,20 @@
 
     <button class="btn gold" id="mineBtn" onclick="mineIt()" disabled>⛏️ BREAK BLOCK &amp; keep mining</button>
 
+    <div id="clarityBox" class="claritybox hidden">
+      <div class="clarityq">🧑‍🏫 Grown-up: how did that sound?</div>
+      <div class="clarityrow">
+        <button class="btn diamond" onclick="clarity(true)">👍 Clear!</button>
+        <button class="btn stone" onclick="clarity(false)">🔁 Try again</button>
+      </div>
+    </div>
+
     <div class="xpwrap" style="margin-top:12px;"><div class="xpbar" id="playXp"></div></div>
     <div class="lbl"><span id="setText">0 / 10 blocks</span></div>
-    <button id="modeBtn" class="btn ghost small" onclick="togglePlayMode()" style="margin-top:10px;">🎮 Guided play: ON</button>
+    <div class="row" style="margin-top:10px;">
+      <button id="modeBtn" class="btn ghost small" onclick="togglePlayMode()">🎮 Guided play: ON</button>
+      <button class="btn gold small" onclick="finishSession()">🏁 All done!</button>
+    </div>
   </section>
 
   <!-- BASE -->
@@ -702,6 +721,10 @@
       <div class="statbox"><div class="n" id="pgStreak">0</div><div class="t">day streak 🔥</div></div>
       <div class="statbox"><div class="n" id="pgLevel">1</div><div class="t">miner level</div></div>
     </div>
+    <div class="statrow">
+      <div class="statbox"><div class="n" id="pgClear">–</div><div class="t">said clearly ✓ (grown-up)</div></div>
+      <div class="statbox"><div class="n" id="pgTries">0</div><div class="t">clarity checks</div></div>
+    </div>
     <h3>Sounds he's working on</h3>
     <div class="splitbar"><div id="pgR" style="width:50%;background:#d64b4b;"></div><div id="pgS" style="width:50%;background:#4fd6d6;"></div></div>
     <p class="tiny">🟥 R sound: <span id="pgRnum">0</span>  ·  🟦 S/Z sound: <span id="pgSnum">0</span></p>
@@ -725,6 +748,22 @@
 <div class="toast" id="toast"></div>
 <div class="adv" id="adv"><div class="ic" id="advIc">🏆</div><div class="tx" id="advTx"></div></div>
 <div class="confetti" id="confetti"></div>
+
+<!-- END-OF-SESSION FEEDBACK (beta: capture what they like) -->
+<div class="modal" id="fbModal">
+  <div class="inner" style="max-width:420px;text-align:center;">
+    <h2>Great job today! 🎉</h2>
+    <p style="margin:6px 0 2px;">Did you have fun?</p>
+    <div class="fbfaces">
+      <span class="fbface" onclick="rateFun('love',this)">😀</span>
+      <span class="fbface" onclick="rateFun('ok',this)">😐</span>
+      <span class="fbface" onclick="rateFun('meh',this)">☹️</span>
+    </div>
+    <p class="tiny" style="margin:10px 0 4px;text-align:left;">🧑‍🏫 Grown-up note (optional): what did they like / not like?</p>
+    <input type="text" id="fbNote" placeholder="e.g. loved the dragon, wanted harder words…">
+    <button class="btn gold small" onclick="closeFb()" style="margin-top:10px;">Save &amp; finish</button>
+  </div>
+</div>
 
 <!-- SETTINGS -->
 <div class="modal" id="settings">
@@ -751,6 +790,13 @@
 
     <h3>Mouth cues</h3>
     <p class="tiny"><b>R:</b> tongue back &amp; up, growl like a bear — rrr.<br><b>S:</b> smile, teeth close, tongue behind top teeth, quiet snake — sss.<br><b>Z:</b> like S but voice ON — buzzy bee, zzz.</p>
+
+    <h3>🧑‍🏫 Playing with a grown-up</h3>
+    <p class="tiny">Recommended. When ON, after each word you tap <b>👍 Clear</b> or <b>🔁 Try again</b> — that gives him real feedback and quietly records how clearly he's saying his sounds (see it on the Progress page). Turn OFF for solo "just play" fun.</p>
+    <div class="seg" id="coplaySeg">
+      <button onclick="setCoplay(true)" class="on">🧑‍🏫 With grown-up</button>
+      <button onclick="setCoplay(false)">🧒 Solo</button>
+    </div>
 
     <h3>Say-it reps per block</h3>
     <div class="seg" id="repSeg">
@@ -887,6 +933,7 @@ function freshState(){ return {
   xp:0, level:1, diamonds:0, streak:0, lastPlayed:"", advCount:0,
   advs:{}, base:{}, hotbar:{}, tamed:{}, reps:5, voiceName:"", modelVoice:"Justin",
   sound:true, slow:false, autoMode:true, name:"Benji", easy:false, creations:[], stats:null, music:true, blockBank:0,
+  coplay:true, feedback:[],
   world:{name:"",plots:{},mats:{wood:0,stone:0},trophies:[]},
   adv2:{level:0,petStage:0,petXP:0,cleared:0},
   cloud:{url:"",key:"",code:""}
@@ -1149,6 +1196,36 @@ function speakWord(cb){
   if(A.level==="sentence") t=SENTENCES[A.idx%SENTENCES.length].replace("___",item.w);
   speakModel(t, A.level==="word", cb);
 }
+/* ===== CO-PLAY: grown-up "Was it clear?" tap (real feedback + accuracy data) ===== */
+function wordDone(){ if(S.coplay){ showClarity(); return; } mineIt(); }
+function showClarity(){ const b=document.getElementById('clarityBox'); if(b) b.classList.remove('hidden'); setAutoStatus('good','⭐ Nice try! Grown-up: was it clear?'); }
+function hideClarity(){ const b=document.getElementById('clarityBox'); if(b) b.classList.add('hidden'); }
+function clarity(ok){
+  ensureStats(); S.stats.attempts++; if(ok) S.stats.clear++; save();
+  hideClarity();
+  if(ok){ sfx('collect'); mineIt(); return; }
+  sfx('err'); toast("Let's try that one again! 👂");
+  A.repsDone=0; document.querySelectorAll('#swings .swing').forEach(r=>{r.classList.remove('on');r.textContent="";});
+  if(autoRunning){ turnBusy=false; setTimeout(function(){ if(autoRunning) runTurn(); }, 350); }
+  else { speakWord(); }
+}
+function setCoplay(on){ S.coplay=on; save(); document.querySelectorAll('#coplaySeg button').forEach((b,i)=>b.classList.toggle('on',(i===0)===on)); toast(on?"🧑‍🏫 Grown-up mode ON":"🧒 Solo mode ON"); }
+/* end-of-session feedback (beta) */
+let _fbPick=null;
+function finishSession(){
+  autoRunning=false; turnBusy=false; mic.listening=false; try{micStop();}catch(e){} musDuck(false); hideClarity();
+  _fbPick=null; document.querySelectorAll('.fbface').forEach(f=>f.classList.remove('pick'));
+  const n=document.getElementById('fbNote'); if(n) n.value='';
+  const m=document.getElementById('fbModal'); if(m) m.classList.add('show');
+}
+function rateFun(v,el){ _fbPick=v; document.querySelectorAll('.fbface').forEach(f=>f.classList.remove('pick')); if(el) el.classList.add('pick'); sfx('tick'); }
+function closeFb(){
+  ensureStats(); const note=(document.getElementById('fbNote')||{}).value||'';
+  if(_fbPick||note){ S.feedback.push({d:todayStr(), fun:_fbPick||'', note:note}); if(S.feedback.length>60) S.feedback=S.feedback.slice(-60); save(); }
+  const m=document.getElementById('fbModal'); if(m) m.classList.remove('show');
+  toast('Saved! Great practice today. 🌟'); go('home');
+}
+
 function mineIt(){
   if(ADV2.on) return advStep();
   if(REVEAL.on) return revealStep();
@@ -1343,7 +1420,7 @@ function doListen(){
       if(A.repsDone>=repsNow()){
         musDuck(false);
         if(spoke && mic.url){ setTimeout(function(){ try{ const ae=new Audio(mic.url); ae.onerror=function(){}; const pp=ae.play(); if(pp&&pp.catch) pp.catch(function(){}); }catch(e){} }, 200); }
-        setTimeout(function(){ turnBusy=false; A.rated=2; if(autoRunning) mineIt(); }, spoke?1000:300);
+        setTimeout(function(){ turnBusy=false; A.rated=2; if(autoRunning) wordDone(); }, spoke?1000:300);
       } else {
         setTimeout(function(){ if(autoRunning) doListen(); }, 600);
       }
@@ -1396,7 +1473,7 @@ function tapWord(){
     const b=document.getElementById('wordBlock');
     if(A.repsDone>=repsNow()){
       if(b) b.classList.remove('needtap');
-      if(autoRunning){ A.rated=2; turnBusy=false; setTimeout(function(){ if(autoRunning) mineIt(); },180); }
+      if(autoRunning){ A.rated=2; turnBusy=false; setTimeout(function(){ if(autoRunning) wordDone(); },180); }
     } else if(autoRunning && micOff){
       setAutoStatus('listen',"👆 Say it, then TAP the block!  ("+(repsNow()-A.repsDone)+" to go)");
     }
@@ -1844,7 +1921,10 @@ function ensureStats(){
   if(!S.stats) S.stats={says:0,blocks:0,sentences:0,bySound:{R:0,SZ:0,MIX:0},words:{},days:{},puzzles:{}};
   if(!S.stats.bySound) S.stats.bySound={R:0,SZ:0,MIX:0};
   if(!S.stats.words) S.stats.words={}; if(!S.stats.days) S.stats.days={}; if(!S.stats.puzzles) S.stats.puzzles={};
+  if(typeof S.stats.attempts!=='number') S.stats.attempts=0;
+  if(typeof S.stats.clear!=='number') S.stats.clear=0;
   if(!S.creations) S.creations=[];
+  if(!S.feedback) S.feedback=[];
 }
 function statBlock(target,word){
   ensureStats();
@@ -1864,6 +1944,7 @@ function renderProgress(){
   ensureStats(); const st=S.stats;
   setW('pgName',S.name||'Benji'); setW('pgSays',st.says); setW('pgBlocks',st.blocks);
   setW('pgStreak',S.streak); setW('pgLevel',S.level);
+  { const at=st.attempts||0, cl=st.clear||0; setW('pgTries',at); setW('pgClear', at? Math.round(cl/at*100)+'%' : '–'); }
   const r=st.bySound.R||0, s=(st.bySound.SZ||0)+(st.bySound.MIX||0), tot=Math.max(1,r+s);
   document.getElementById('pgR').style.width=Math.round(r/tot*100)+"%";
   document.getElementById('pgS').style.width=Math.round(s/tot*100)+"%";
@@ -2223,6 +2304,7 @@ function syncToggleUI(){
   document.querySelectorAll('#slowSeg button').forEach((b,i)=>b.classList.toggle('on',(i===1)===!!S.slow));
   document.querySelectorAll('#musicSeg button').forEach((b,i)=>b.classList.toggle('on',(i===0)===(S.music!==false)));
   document.querySelectorAll('#easySeg button').forEach(b=>b.classList.toggle('on',(b.getAttribute('data-e')==='easy')===!!S.easy));
+  document.querySelectorAll('#coplaySeg button').forEach((b,i)=>b.classList.toggle('on',(i===0)===(S.coplay!==false)));
 }
 
 /* ================= INIT ================= */
