@@ -814,9 +814,9 @@ const POS={0:"top left",1:"top middle",2:"top right",3:"middle left",4:"center",
 /* ===== PLAYER PROFILES (Benji + Juju, each own world) ===== */
 const AVATARS={
   benji:{rows:["................","....HHHHHHHH....","..HHHHHHHHHHHH..",".HHHHHHHHHHHHHH.",".HHSSSSSSSSSSHH.",".HSSSSSSSSSSSSH.",".HSGGGGGGGGGGSH.",".HSGLELSSLELGSH.",".SSGGGGSSGGGGSS.",".SSSSSSssSSSSSS.",".SSSMTTgTTTMSSS.",".SSSSppppppSSSS.",".....SSSSSS.....","..VVBBBNNBBBVV..",".VVVVVBNNBVVVVV.",".VVVVVVNNVVVVVV."],
-    colors:{H:'#3a2a1c',S:'#ecb98d',s:'#d89e70',G:'#171f57',L:'#d6ecfb',E:'#241d16',g:'#6b3a30',T:'#ffffff',M:'#c86a55',p:'#d07d69',V:'#171f57',B:'#cfe0f5',N:'#28397f'}},
+    colors:{H:'#140f0c',S:'#ecb98d',s:'#d89e70',G:'#171f57',L:'#d6ecfb',E:'#241d16',g:'#6b3a30',T:'#ffffff',M:'#c86a55',p:'#d07d69',V:'#171f57',B:'#cfe0f5',N:'#28397f'}},
   juju:{rows:["................","...HHHHHHHHHH...","..HHHHHHHHHHHH..",".HHHHHHHHHHHHHH.",".HHHHHHHHHHHHHH.",".HHSSHHHHHHSSHH.",".HHSSSSSSSSSSHH.",".HSSSESSSSESSSH.",".HSSSSSSssSSSSH.",".HSSSSSSSSSSSSH.",".SSSSpTTTTpSSSS.",".SSSSSpppPSSSSS.",".....SSSSSS.....","...NNNNSSNNNN...","..NNNNNNNNNNNN..",".NNNNNNNNNNNNNN."],
-    colors:{H:'#6b4a2e',S:'#ecb98d',s:'#d89e70',E:'#3a5a92',T:'#ffffff',p:'#d07d69',P:'#d07d69',N:'#22346a'}}
+    colors:{H:'#a17c4e',S:'#ecb98d',s:'#d89e70',E:'#3a5a92',T:'#ffffff',p:'#d07d69',P:'#d07d69',N:'#22346a'}}
 };
 function avatarSVG(id){ const a=AVATARS[id]; if(!a) return ''; let r=''; for(let y=0;y<a.rows.length;y++){ const row=a.rows[y]; for(let x=0;x<row.length;x++){ const c=a.colors[row[x]]; if(c) r+='<rect x="'+x+'" y="'+y+'" width="1" height="1" fill="'+c+'"/>'; } } return '<svg class="pxav" viewBox="0 0 16 16" shape-rendering="crispEdges" preserveAspectRatio="xMidYMid meet">'+r+'</svg>'; }
 const DEFAULT_PLAYERS=[{id:'benji',name:'Benji',emoji:'🧑',avatar:'benji',easy:false,reps:5},{id:'juju',name:'Juju',emoji:'🧒',avatar:'juju',easy:true,reps:3}];
