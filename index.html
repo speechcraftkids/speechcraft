@@ -221,6 +221,7 @@
   .pickfx.swing{animation:swingpk .32s ease;}
   @keyframes swingpk{0%{opacity:1;transform:rotate(-58deg) translateY(-6px);}60%{opacity:1;transform:rotate(18deg) translateY(4px);}100%{opacity:0;transform:rotate(6deg);}}
   .pxlogo{width:clamp(64px,16vw,120px);height:auto;image-rendering:pixelated;}
+  .pxav{width:100%;height:100%;image-rendering:pixelated;border-radius:8px;display:block;}
 
   /* video cave */
   .vidcard{background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(0,0,0,.22));border:3px solid rgba(0,0,0,.4);border-radius:8px;padding:12px;margin-bottom:14px;}
@@ -306,8 +307,11 @@
       <div class="sub">Talk to mine • Craft • Build • Level up</div>
     </div>
     <div class="card" style="margin-top:16px;">
-      <div class="lbl" style="text-align:left;font-size:10px;color:#fff;">Level <span id="homeLevel">1</span> Miner</div>
-      <div class="xpwrap"><div class="xpbar" id="homeXp"></div></div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span id="homeAvatar" style="width:48px;height:48px;display:inline-flex;flex:0 0 48px;"></span>
+        <div class="lbl" style="text-align:left;color:#fff;">Level <span id="homeLevel">1</span> Miner</div>
+      </div>
+      <div class="xpwrap" style="margin-top:8px;"><div class="xpbar" id="homeXp"></div></div>
       <div class="hud" style="margin-top:8px;">
         <span class="chip">💎 <span id="homeDia">0</span></span>
         <span class="chip">🔥 <span id="homeStreak">0</span> day</span>
@@ -737,11 +741,19 @@ const POS={0:"top left",1:"top middle",2:"top right",3:"middle left",4:"center",
 
 /* ================= STATE / SAVE ================= */
 /* ===== PLAYER PROFILES (Benji + Juju, each own world) ===== */
-const DEFAULT_PLAYERS=[{id:'benji',name:'Benji',emoji:'🧑',easy:false,reps:5},{id:'juju',name:'Juju',emoji:'🧒',easy:true,reps:3}];
+const AVATARS={
+  benji:{rows:["................","....HHHHHHHH....","..HHHHHHHHHHHH..",".HHHHHHHHHHHHHH.",".HHSSSSSSSSSSHH.",".HSSSSSSSSSSSSH.",".HSGGGGGGGGGGSH.",".HSGLELSSLELGSH.",".SSGGGGSSGGGGSS.",".SSSSSSssSSSSSS.",".SSSMTTgTTTMSSS.",".SSSSppppppSSSS.",".....SSSSSS.....","..VVBBBNNBBBVV..",".VVVVVBNNBVVVVV.",".VVVVVVNNVVVVVV."],
+    colors:{H:'#3a2a1c',S:'#ecb98d',s:'#d89e70',G:'#171f57',L:'#d6ecfb',E:'#241d16',g:'#6b3a30',T:'#ffffff',M:'#c86a55',p:'#d07d69',V:'#171f57',B:'#cfe0f5',N:'#28397f'}},
+  juju:{rows:["................","...HHHHHHHHHH...","..HHHHHHHHHHHH..",".HHHHHHHHHHHHHH.",".HHHHHHHHHHHHHH.",".HHSSHHHHHHSSHH.",".HHSSSSSSSSSSHH.",".HSSSESSSSESSSH.",".HSSSSSSssSSSSH.",".HSSSSSSSSSSSSH.",".SSSSpTTTTpSSSS.",".SSSSSpppPSSSSS.",".....SSSSSS.....","...NNNNSSNNNN...","..NNNNNNNNNNNN..",".NNNNNNNNNNNNNN."],
+    colors:{H:'#6b4a2e',S:'#ecb98d',s:'#d89e70',E:'#3a5a92',T:'#ffffff',p:'#d07d69',P:'#d07d69',N:'#22346a'}}
+};
+function avatarSVG(id){ const a=AVATARS[id]; if(!a) return ''; let r=''; for(let y=0;y<a.rows.length;y++){ const row=a.rows[y]; for(let x=0;x<row.length;x++){ const c=a.colors[row[x]]; if(c) r+='<rect x="'+x+'" y="'+y+'" width="1" height="1" fill="'+c+'"/>'; } } return '<svg class="pxav" viewBox="0 0 16 16" shape-rendering="crispEdges" preserveAspectRatio="xMidYMid meet">'+r+'</svg>'; }
+const DEFAULT_PLAYERS=[{id:'benji',name:'Benji',emoji:'🧑',avatar:'benji',easy:false,reps:5},{id:'juju',name:'Juju',emoji:'🧒',avatar:'juju',easy:true,reps:3}];
 let players=[], curId='benji';
 function loadPlayers(){
   try{ players=JSON.parse(localStorage.getItem('benjiMine_players'))||[]; }catch(e){ players=[]; }
   if(!players.length){ players=DEFAULT_PLAYERS.map(p=>Object.assign({},p)); try{localStorage.setItem('benjiMine_players',JSON.stringify(players));}catch(e){} }
+  let changed=false; players.forEach(p=>{ if(!p.avatar && AVATARS[p.id]){ p.avatar=p.id; changed=true; } }); if(changed){ try{localStorage.setItem('benjiMine_players',JSON.stringify(players));}catch(e){} }
   curId=localStorage.getItem('benjiMine_cur')||players[0].id;
   if(!players.find(p=>p.id===curId)) curId=players[0].id;
 }
@@ -777,7 +789,8 @@ function renderPlayers(){
   players.forEach(p=>{
     let lvl=1; try{ const raw=localStorage.getItem(saveKeyFor(p.id)); if(raw) lvl=(JSON.parse(raw).level||1); }catch(e){}
     const c=document.createElement('div'); c.className="card";
-    c.innerHTML='<div style="font-size:46px;text-align:center;">'+p.emoji+'</div>'+
+    const face=(p.avatar&&AVATARS[p.avatar])?'<div style="width:76px;height:76px;margin:0 auto 2px;">'+avatarSVG(p.avatar)+'</div>':'<div style="font-size:46px;text-align:center;">'+p.emoji+'</div>';
+    c.innerHTML=face+
       '<div class="lbl" style="text-align:center;color:#fff;font-size:clamp(15px,3vw,20px);">'+p.name+(p.id===curId?' ✓':'')+'</div>'+
       '<div class="tiny" style="text-align:center;">Level '+lvl+(p.easy?' · gentle mode':'')+'</div>';
     const b=document.createElement('button'); b.className="btn "+(p.id===curId?'gold':'stone')+" small"; b.style.marginTop="8px";
@@ -786,7 +799,7 @@ function renderPlayers(){
     c.appendChild(b); list.appendChild(c);
   });
 }
-function updateOwnerName(){ const e=document.getElementById('ownerName'); if(e) e.textContent=(S.name||'Benji').toUpperCase(); }
+function updateOwnerName(){ const e=document.getElementById('ownerName'); if(e) e.textContent=(S.name||'Benji').toUpperCase(); const a=document.getElementById('homeAvatar'); if(a){ const p=curPlayer(); a.innerHTML=(p&&p.avatar&&AVATARS[p.avatar])?avatarSVG(p.avatar):(p?('<span style="font-size:34px;">'+p.emoji+'</span>'):''); } }
 
 /* level curve */
 function xpForNext(lvl){return 40+lvl*20;}
