@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#3e7a30">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Benji's Speech Mine</title>
+<title>SpeechCraft</title>
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Crect width='180' height='180' fill='%235fb04a'/%3E%3Crect y='120' width='180' height='60' fill='%238a5a2b'/%3E%3Crect x='60' y='40' width='60' height='60' fill='%234fd6d6'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
@@ -289,6 +289,45 @@
   .chartwrap{display:flex;gap:5px;align-items:flex-end;height:90px;margin-top:8px;}
   .chartwrap .col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;}
   .chartwrap .bar{width:72%;background:linear-gradient(180deg,#8de06f,#3e7a30);border-radius:4px 4px 0 0;min-height:3px;}
+
+  /* ===== MY WORLD ===== */
+  .worldtitle{text-align:center;font-family:'Press Start 2P',monospace;font-size:clamp(15px,3.6vw,24px);
+    color:#ffe14d;margin:6px 0 10px;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .worldtitle .mini{background:rgba(0,0,0,.35);border:2px solid rgba(0,0,0,.4);border-radius:6px;
+    color:#fff;font-family:inherit;font-size:clamp(13px,2.4vw,17px);padding:6px 8px;cursor:pointer;}
+  .worldscene{position:relative;border:4px solid #3e2a16;border-radius:12px;overflow:hidden;
+    background:linear-gradient(180deg,#7ec0ee 0%,#a9d8f5 46%,#8fd06a 46%,#6fb84a 100%);
+    box-shadow:inset 0 0 0 3px rgba(255,255,255,.12),0 8px 0 #2a1c0e,0 12px 18px rgba(0,0,0,.4);padding:10px;}
+  .wsky{position:absolute;top:6px;left:0;right:0;height:44%;pointer-events:none;}
+  .wsun{position:absolute;top:2px;right:12px;font-size:clamp(26px,6vw,40px);}
+  .wcloud{position:absolute;top:14px;left:16px;font-size:clamp(20px,5vw,34px);opacity:.9;animation:drift 9s ease-in-out infinite;}
+  @keyframes drift{0%,100%{transform:translateX(0);}50%{transform:translateX(30px);}}
+  .worldgrid{position:relative;display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:8px;}
+  .wplot{aspect-ratio:1;background:linear-gradient(180deg,#7cc457,#5c9e3c);border:2px solid #4a7f30;
+    border-radius:6px;display:flex;align-items:center;justify-content:center;
+    font-size:clamp(22px,6.2vw,40px);line-height:1;cursor:pointer;box-shadow:inset 0 -4px 0 rgba(0,0,0,.14);}
+  .wplot.filled{background:linear-gradient(180deg,#8ace63,#65a844);animation:pop .3s;}
+  .wplot:active{transform:translateY(2px);}
+  .worldfolk{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;margin-top:10px;
+    background:rgba(0,0,0,.18);border-radius:8px;padding:8px;min-height:56px;}
+  .worldfolk .hero{width:clamp(42px,10vw,60px);height:clamp(42px,10vw,60px);flex:0 0 auto;}
+  .worldfolk .mob{font-size:clamp(24px,6vw,38px);line-height:1;}
+  .worldfolk .lbl2{font-size:clamp(12px,2.2vw,15px);color:#fff;align-self:center;}
+  .wstatus{text-align:center;font-size:clamp(14px,2.6vw,19px);font-weight:700;padding:11px;margin:12px 0;
+    background:rgba(0,0,0,.28);border:3px solid rgba(0,0,0,.4);border-radius:12px;}
+  .wstatus.pick{background:linear-gradient(180deg,#2f5fa0,#1b3a66);}
+  .buildmenu{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin:8px 0;}
+  .bitem{background:rgba(0,0,0,.28);border:3px solid rgba(0,0,0,.4);border-radius:10px;padding:9px 6px;
+    text-align:center;cursor:pointer;transition:transform .05s;}
+  .bitem:active{transform:translateY(2px);}
+  .bitem.sel{outline:4px solid #ffe14d;background:rgba(255,225,77,.14);}
+  .bitem.cant{opacity:.42;filter:grayscale(.5);}
+  .bitem .be{font-size:clamp(28px,7vw,42px);line-height:1;}
+  .bitem .bn{font-size:clamp(11px,2vw,14px);font-weight:700;margin-top:3px;}
+  .bitem .bc{font-size:clamp(11px,2vw,14px);color:#ffe14d;margin-top:2px;}
+  .trophyshelf{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
+    background:rgba(0,0,0,.2);border:3px solid rgba(0,0,0,.35);border-radius:10px;padding:10px;}
+  .trophyshelf .tr{font-size:clamp(24px,6vw,36px);line-height:1;}
 </style>
 </head>
 <body>
@@ -303,8 +342,8 @@
         <g fill="#8a5a2b"><rect x="7" y="6" width="2" height="2"/><rect x="8" y="8" width="2" height="2"/><rect x="9" y="10" width="2" height="2"/><rect x="10" y="12" width="2" height="2"/></g>
         <g fill="#5e3d1c"><rect x="9" y="8" width="1" height="2"/><rect x="10" y="10" width="1" height="2"/><rect x="11" y="12" width="1" height="2"/></g>
       </svg>
-      <div class="big"><span id="ownerName">BENJI</span>'S<br>SPEECH MINE</div>
-      <div class="sub">Talk to mine • Craft • Build • Level up</div>
+      <div class="big">SPEECH<br>CRAFT</div>
+      <div class="sub"><span id="ownerWorld">BENJI'S WORLD</span> · Talk • Build • Grow</div>
     </div>
     <div class="card" style="margin-top:16px;">
       <div style="display:flex;align-items:center;gap:12px;">
@@ -319,11 +358,42 @@
       </div>
     </div>
     <div class="grid" style="margin-top:14px;">
-      <button class="btn gold" onclick="go('map')">▶  PLAY</button>
-      <button class="btn diamond small" onclick="go('players')">👥  Switch Player (Benji / Juju)</button>
+      <button class="btn gold" onclick="go('world')">🌍  MY WORLD</button>
+      <button class="btn diamond" onclick="go('map')">▶  PLAY &amp; EARN</button>
+      <button class="btn stone small" onclick="go('players')">👥  Switch Player (Benji / Juju)</button>
       <button class="btn stone small" onclick="openSettings()">⚙️  Grown-Up Corner</button>
     </div>
     <p class="center muted" style="text-align:center;margin-top:16px;">Today's mission sounds: <span class="yellow">R · S · Z</span></p>
+  </section>
+
+  <!-- MY WORLD -->
+  <section id="world" class="screen">
+    <div class="topbar">
+      <button class="backbtn" onclick="go('home')">◀ Home</button>
+      <div class="hud">
+        <span class="chip">🪵 <span id="wWood">0</span></span>
+        <span class="chip">🪨 <span id="wStone">0</span></span>
+        <span class="chip">💎 <span id="wDia">0</span></span>
+      </div>
+    </div>
+    <div class="worldtitle">
+      <span id="worldName">Benji's World</span>
+      <button class="mini" onclick="renameWorld()" title="Rename">✏️</button>
+    </div>
+    <div class="worldscene">
+      <div class="wsky"><span class="wsun">☀️</span><span class="wcloud">☁️</span></div>
+      <div class="worldgrid" id="worldGrid"></div>
+      <div class="worldfolk" id="worldFolk"></div>
+    </div>
+    <div class="wstatus" id="wStatus">👇 Pick something to build, then tap a green spot!</div>
+    <h3 style="text-align:center;">🔨 Build Menu</h3>
+    <div class="buildmenu" id="buildMenu"></div>
+    <div id="trophyWrap" class="hidden">
+      <h3 style="text-align:center;">🏆 Trophy Shelf</h3>
+      <div class="trophyshelf" id="trophyShelf"></div>
+    </div>
+    <button class="btn diamond" onclick="go('map')" style="margin-top:14px;">🎤 Talk to earn more blocks!</button>
+    <p class="center tiny" style="text-align:center;">Everything you build stays here forever. 🌱</p>
   </section>
 
   <!-- PLAYERS -->
@@ -385,6 +455,7 @@
       <button class="backbtn" onclick="go('map')">◀ Map</button>
       <div class="hud">
         <span class="chip" id="biomeChip">⛏️ R Mine</span>
+        <span class="chip" id="playMatChip">🪵 <span id="playMat">0</span></span>
         <span class="chip">💎 <span id="playDia">0</span></span>
       </div>
     </div>
@@ -594,7 +665,7 @@
 <div class="nav" id="nav">
   <button data-s="home" onclick="go('home')"><span class="i">🏠</span>Home</button>
   <button data-s="map" onclick="go('map')"><span class="i">🗺️</span>Play</button>
-  <button data-s="base" onclick="go('base')"><span class="i">🏰</span>Base</button>
+  <button data-s="world" onclick="go('world')"><span class="i">🌍</span>World</button>
   <button data-s="mobs" onclick="go('mobs')"><span class="i">🐾</span>Mobs</button>
 </div>
 
@@ -763,6 +834,7 @@ function freshState(){ return {
   xp:0, level:1, diamonds:0, streak:0, lastPlayed:"", advCount:0,
   advs:{}, base:{}, hotbar:{}, tamed:{}, reps:5, voiceName:"", modelVoice:"Justin",
   sound:true, slow:false, autoMode:true, name:"Benji", easy:false, creations:[], stats:null, music:true, blockBank:0,
+  world:{name:"",plots:{},mats:{wood:0,stone:0},trophies:[]},
   cloud:{url:"",key:"",code:""}
 }; }
 let S=freshState();
@@ -799,7 +871,11 @@ function renderPlayers(){
     c.appendChild(b); list.appendChild(c);
   });
 }
-function updateOwnerName(){ const e=document.getElementById('ownerName'); if(e) e.textContent=(S.name||'Benji').toUpperCase(); const a=document.getElementById('homeAvatar'); if(a){ const p=curPlayer(); a.innerHTML=(p&&p.avatar&&AVATARS[p.avatar])?avatarSVG(p.avatar):(p?('<span style="font-size:34px;">'+p.emoji+'</span>'):''); } }
+function updateOwnerName(){
+  ensureWorld();
+  const e=document.getElementById('ownerWorld'); if(e) e.textContent=(S.world.name||((S.name||'Benji')+"'s World")).toUpperCase();
+  const a=document.getElementById('homeAvatar'); if(a){ const p=curPlayer(); a.innerHTML=(p&&p.avatar&&AVATARS[p.avatar])?avatarSVG(p.avatar):(p?('<span style="font-size:34px;">'+p.emoji+'</span>'):''); }
+}
 
 /* level curve */
 function xpForNext(lvl){return 40+lvl*20;}
@@ -814,6 +890,9 @@ function refreshHud(){
   setW('mapLevel',S.level); setW('mapDia',S.diamonds); setW('mapStreak',S.streak);
   setW('playDia',S.diamonds);
   setW('baseBlocks',S.blockBank||0);
+  ensureWorld();
+  setW('wWood',S.world.mats.wood||0); setW('wStone',S.world.mats.stone||0); setW('wDia',S.diamonds);
+  setW('playMat', (S.world.mats.wood||0)+(S.world.mats.stone||0));
   updateOwnerName();
 }
 function setW(id,v){const e=document.getElementById(id); if(e) e.textContent=v;}
@@ -851,6 +930,7 @@ function go(id){
   if(id==='mobs'){ renderMobs(); }
   if(id==='watch'){ renderWatch(); }
   if(id==='players'){ renderPlayers(); }
+  if(id==='world'){ renderWorld(); }
   if(id==='puzzles'){ renderPuzzleList(); }
   if(id==='gallery'){ renderGallery(); }
   if(id==='progress'){ renderProgress(); }
@@ -996,7 +1076,7 @@ function buildSwings(){
   for(let i=0;i<repsNow();i++){const d=document.createElement('div');d.className="swing";d.onclick=()=>addSwing(i+1);wrap.appendChild(d);}
 }
 function addSwing(n){
-  if(n>A.repsDone){ ensureStats(); S.stats.says++; S.blockBank=(S.blockBank||0)+1; }
+  if(n>A.repsDone){ ensureStats(); S.stats.says++; S.blockBank=(S.blockBank||0)+1; earnMat(A.target,1); }
   A.repsDone=Math.max(A.repsDone,n);
   const sw=document.querySelectorAll('#swings .swing');
   sw.forEach((r,idx)=>{if(idx<A.repsDone){r.classList.add('on');r.textContent="⛏️";}});
@@ -1420,9 +1500,123 @@ function completeReveal(){
   toast("🏆 You built the "+REVEAL.pat.name+"!");
   speakModel("Wow! You built the "+REVEAL.plain+"! Amazing job!",false);
   S.creations.push({name:REVEAL.pat.name, cells:Object.assign({},REVEAL.cur)});
-  S.diamonds+=5; addXp(15); ensureStats(); S.stats.puzzles['pic_'+REVEAL.pat.id]=true; save();
+  S.diamonds+=5; addXp(15); ensureStats(); S.stats.puzzles['pic_'+REVEAL.pat.id]=true;
+  ensureWorld(); const trEmo=(REVEAL.pat.name.trim().split(/\s+/)[0])||'🏆'; if(S.world.trophies.indexOf(trEmo)<0) S.world.trophies.push(trEmo);
+  save();
+  setTimeout(function(){ toast("🏆 New trophy for your World! Go place your blocks!"); }, 1400);
   turnBusy=false;
   setTimeout(function(){ if(!REVEAL.on) return; setupReveal(pickPattern()); loadWord(); }, 2400);
+}
+
+/* ================= MY WORLD (persistent build-your-own-world) ================= */
+const WORLD_COLS=6, WORLD_ROWS=4, WORLD_PLOTS=WORLD_COLS*WORLD_ROWS;
+/* every structure is bought with blocks the kids EARN by talking */
+const STRUCTURES=[
+  {id:'flower',emoji:'🌷',name:'Flowers',cost:{wood:1}},
+  {id:'torch', emoji:'🔥',name:'Torch',  cost:{wood:1}},
+  {id:'tree',  emoji:'🌳',name:'Tree',   cost:{wood:2}},
+  {id:'farm',  emoji:'🌾',name:'Farm',   cost:{wood:3}},
+  {id:'pen',   emoji:'🐷',name:'Animal Pen',cost:{wood:3}},
+  {id:'house', emoji:'🏠',name:'House',  cost:{wood:5}},
+  {id:'rock',  emoji:'🪨',name:'Rock',   cost:{stone:2}},
+  {id:'pond',  emoji:'💧',name:'Pond',   cost:{stone:3}},
+  {id:'mine',  emoji:'⛏️',name:'Mine',   cost:{stone:4}},
+  {id:'tower', emoji:'🗼',name:'Tower',  cost:{stone:5}},
+  {id:'castle',emoji:'🏰',name:'Castle', cost:{stone:5,wood:5}},
+  {id:'diamond',emoji:'💎',name:'Diamond Block',cost:{diamond:1}}
+];
+/* per-kid theme unlocks — Juju loves robots, Benji gets Minecraft favorites */
+const THEME_STRUCT={
+  benji:[{id:'dragon',emoji:'🐉',name:'Ender Dragon',cost:{diamond:2}},{id:'portal',emoji:'🌀',name:'Portal',cost:{stone:4}}],
+  juju: [{id:'robot',emoji:'🤖',name:'Robot',cost:{stone:3}},{id:'rocket',emoji:'🚀',name:'Rocket',cost:{stone:2,wood:2}}]
+};
+function themeFor(){ const p=curPlayer(); const key=(p&&p.avatar)||curId; return THEME_STRUCT[key]||THEME_STRUCT[curId]||[]; }
+function allStruct(){ return STRUCTURES.concat(themeFor()); }
+function structById(id){ return allStruct().find(s=>s.id===id)||null; }
+function ensureWorld(){
+  if(!S.world) S.world={name:"",plots:{},mats:{wood:0,stone:0},trophies:[]};
+  if(!S.world.plots) S.world.plots={};
+  if(!S.world.mats) S.world.mats={wood:0,stone:0};
+  if(typeof S.world.mats.wood!=='number') S.world.mats.wood=0;
+  if(typeof S.world.mats.stone!=='number') S.world.mats.stone=0;
+  if(!S.world.trophies) S.world.trophies=[];
+  if(!S.world.name) S.world.name=(S.name||'My')+"'s World";
+}
+function matForSound(t){ return t==='SZ'?'stone':'wood'; } /* R & MIX → wood, S/Z → stone */
+function earnMat(t,n){
+  ensureWorld(); const m=matForSound(t); S.world.mats[m]=(S.world.mats[m]||0)+(n||1);
+  setW('playMat',(S.world.mats.wood||0)+(S.world.mats.stone||0));
+}
+function haveOf(k){ ensureWorld(); return k==='diamond'?(S.diamonds||0):(S.world.mats[k]||0); }
+function canAfford(cost){ for(const k in cost){ if(haveOf(k)<cost[k]) return false; } return true; }
+function spendCost(cost){ ensureWorld(); for(const k in cost){ if(k==='diamond') S.diamonds-=cost[k]; else S.world.mats[k]-=cost[k]; } }
+function refundCost(cost){ ensureWorld(); for(const k in cost){ if(k==='diamond') S.diamonds=(S.diamonds||0)+cost[k]; else S.world.mats[k]=(S.world.mats[k]||0)+cost[k]; } }
+const MAT_EMO={wood:'🪵',stone:'🪨',diamond:'💎'};
+function costText(cost){ return Object.keys(cost).map(k=>cost[k]+' '+MAT_EMO[k]).join(' '); }
+let worldSel=null;
+function renderWorld(){
+  ensureWorld();
+  setW('worldName', S.world.name);
+  setW('wWood',S.world.mats.wood||0); setW('wStone',S.world.mats.stone||0); setW('wDia',S.diamonds);
+  /* the land */
+  const grid=document.getElementById('worldGrid'); if(grid){ grid.innerHTML="";
+    for(let i=0;i<WORLD_PLOTS;i++){
+      const cell=document.createElement('div'); const sid=S.world.plots[i]; const st=sid?structById(sid):null;
+      cell.className="wplot"+(st?" filled":""); cell.textContent=st?st.emoji:"";
+      cell.onclick=(function(idx){ return function(){ worldPlot(idx); }; })(i);
+      grid.appendChild(cell);
+    }
+  }
+  /* who lives here: avatar + tamed mobs */
+  const folk=document.getElementById('worldFolk'); if(folk){ folk.innerHTML="";
+    const p=curPlayer();
+    const hero=document.createElement('div'); hero.className="hero";
+    hero.innerHTML=(p&&p.avatar&&AVATARS[p.avatar])?avatarSVG(p.avatar):('<span style="font-size:38px;">'+(p?p.emoji:'🧑')+'</span>');
+    folk.appendChild(hero);
+    const tamed=Object.keys(S.tamed||{}).filter(k=>S.tamed[k]);
+    if(tamed.length){ tamed.forEach(name=>{ const m=MOBS.find(x=>x.name===name); if(m){ const d=document.createElement('div'); d.className="mob"; d.textContent=m.e; folk.appendChild(d); } }); }
+    else { const l=document.createElement('div'); l.className="lbl2"; l.textContent="Tame mobs to bring them home! 🐾"; folk.appendChild(l); }
+  }
+  /* build menu */
+  const menu=document.getElementById('buildMenu'); if(menu){ menu.innerHTML="";
+    allStruct().forEach(st=>{
+      const ok=canAfford(st.cost);
+      const b=document.createElement('div'); b.className="bitem"+(worldSel===st.id?" sel":"")+(ok?"":" cant");
+      b.innerHTML='<div class="be">'+st.emoji+'</div><div class="bn">'+st.name+'</div><div class="bc">'+costText(st.cost)+'</div>';
+      b.onclick=(function(id,okk){ return function(){ selectBuild(id,okk); }; })(st.id,ok);
+      menu.appendChild(b);
+    });
+  }
+  /* trophies */
+  const tw=document.getElementById('trophyWrap'), ts=document.getElementById('trophyShelf');
+  if(tw&&ts){ if(S.world.trophies.length){ tw.classList.remove('hidden'); ts.innerHTML=S.world.trophies.map(e=>'<span class="tr">'+e+'</span>').join(''); } else { tw.classList.add('hidden'); } }
+  updateWorldStatus();
+}
+function selectBuild(id,ok){
+  if(!ok){ const st=structById(id); toast("Talk more to earn "+costText(st.cost)+"! 🎤"); return; }
+  worldSel=(worldSel===id)?null:id; sfx('tick'); renderWorld();
+}
+function updateWorldStatus(){
+  const el=document.getElementById('wStatus'); if(!el) return;
+  if(worldSel){ const st=structById(worldSel); el.className="wstatus pick"; el.textContent="👆 Tap a green spot to place your "+(st?st.emoji+' '+st.name:'block')+"!"; }
+  else { el.className="wstatus"; el.textContent="👇 Pick something to build, then tap a green spot!"; }
+}
+function worldPlot(idx){
+  ensureWorld();
+  const cur=S.world.plots[idx];
+  if(cur){ const st=structById(cur); if(st) refundCost(st.cost); delete S.world.plots[idx]; sfx('place'); toast("Picked it back up — blocks returned!"); save(); renderWorld(); return; }
+  if(!worldSel){ toast("Pick something to build below first! 👇"); return; }
+  const st=structById(worldSel); if(!st) return;
+  if(!canAfford(st.cost)){ toast("Talk more to earn "+costText(st.cost)+"! 🎤"); renderWorld(); return; }
+  spendCost(st.cost); S.world.plots[idx]=st.id; sfx('place'); setTimeout(()=>sfx('collect'),90);
+  buzz(15); save(); renderWorld();
+  toast("You built a "+st.name+"! 🎉");
+  if(Object.keys(S.world.plots).length>=6 && !S.advs.builder6) advance("builder6","🏗️","World Builder!","You placed 6 things in your world!");
+}
+function renameWorld(){
+  ensureWorld();
+  let nm=null; try{ nm=window.prompt("Name your world:", S.world.name); }catch(e){ nm=null; }
+  if(nm && nm.trim()){ S.world.name=nm.trim().slice(0,22); save(); renderWorld(); updateOwnerName(); toast("World renamed! 🌍"); }
 }
 
 /* ================= STATS / PROGRESS ================= */
