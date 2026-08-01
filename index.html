@@ -647,10 +647,10 @@
       <button onclick="setMusic(false)">🚫 Music OFF</button>
     </div>
     <div class="seg" id="slowSeg" style="margin-top:6px;">
-      <button onclick="setSlow(false)" class="on">🐇 Normal pace</button>
-      <button onclick="setSlow(true)">🐢 Slow &amp; clear</button>
+      <button onclick="setSlow(false)" class="on">🐢 Slow (default)</button>
+      <button onclick="setSlow(true)">🐌 Extra slow</button>
     </div>
-    <p class="tiny">Benji's report notes his words get harder to understand when he talks fast. <b>Slow &amp; clear</b> plays the model slower and shows a turtle pacing bar.</p>
+    <p class="tiny">The voice is slowed everywhere so Benji hears every sound clearly (the pitch stays natural). <b>Extra slow</b> stretches it even more for the hardest words.</p>
 
     <h3>When Benji mis-says a word (his SLP's steps)</h3>
     <div class="cuecard">
@@ -907,20 +907,25 @@ function ttsUrl(provider,text){
 }
 function speakModel(text, slow, onend){
   let done=false; const fin=function(){ if(done)return; done=true; if(onend){try{onend();}catch(e){}} };
-  if(S.slow || S.modelVoice==='device'){ sayEnd(text, S.slow?0.55:(slow?0.72:0.9), fin); return; }
+  const rate = S.slow ? 0.6 : 0.72;   // slowed throughout so he hears every sound (pitch kept natural)
+  if(S.modelVoice==='device'){ sayEnd(text, S.slow?0.48:0.7, fin); return; }
   if(modelAudio){ try{modelAudio.pause();}catch(e){} }
   const chain=['se','google']; let i=0;
   const tryNext=function(){
-    if(i>=chain.length){ sayEnd(text, slow?0.72:0.9, fin); return; }  // last resort: device voice
+    if(i>=chain.length){ sayEnd(text, S.slow?0.48:0.7, fin); return; }  // last resort: device voice
     const url=ttsUrl(chain[i++], text);
     let a; try{ a=new Audio(); a.src=url; }catch(e){ tryNext(); return; }
+    try{ a.preservesPitch=true; a.mozPreservesPitch=true; a.webkitPreservesPitch=true; }catch(e){}
+    const applyRate=function(){ try{ a.playbackRate=rate; }catch(e){} };
+    applyRate();
     modelAudio=a; let settled=false;
-    const to=setTimeout(function(){ if(!settled){ settled=true; tryNext(); } }, 2600); // no audio yet → next source
-    a.onplaying=function(){ if(!settled){ settled=true; clearTimeout(to); } };
+    const to=setTimeout(function(){ if(!settled){ settled=true; tryNext(); } }, 3200); // no audio yet → next source
+    a.onloadedmetadata=applyRate; a.oncanplay=applyRate;
+    a.onplaying=function(){ applyRate(); if(!settled){ settled=true; clearTimeout(to); } };
     a.onended=function(){ clearTimeout(to); fin(); };
     a.onerror=function(){ if(!settled){ settled=true; clearTimeout(to); tryNext(); } };
     const p=a.play(); if(p&&p.catch) p.catch(function(){ if(!settled){ settled=true; clearTimeout(to); tryNext(); } });
-    setTimeout(fin, Math.max(3500, text.length*95+3500)); // absolute safety so guided flow never hangs
+    setTimeout(fin, Math.max(4500, text.length*150+4500)); // absolute safety so guided flow never hangs
   };
   tryNext();
 }
