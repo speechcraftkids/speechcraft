@@ -333,6 +333,23 @@
     background:rgba(0,0,0,.2);border:3px solid rgba(0,0,0,.35);border-radius:10px;padding:10px;}
   .trophyshelf .tr{font-size:clamp(24px,6vw,36px);line-height:1;}
 
+  /* ===== ADVENTURE (pet + levels + boss) ===== */
+  .advpanel{background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(0,0,0,.28));border:3px solid rgba(0,0,0,.4);border-radius:14px;padding:12px;margin-bottom:12px;}
+  .advtop{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+  .advlvl{font-family:'Press Start 2P',monospace;font-size:clamp(10px,2.2vw,15px);color:#ffe14d;line-height:1.5;}
+  .advprog{font-size:clamp(13px,2.5vw,18px);font-weight:700;letter-spacing:1px;}
+  .advscene{display:flex;justify-content:space-around;align-items:flex-end;gap:10px;}
+  .advpet,.advfoe{text-align:center;flex:1;}
+  .advface{font-size:clamp(44px,13vw,86px);line-height:1;display:inline-block;filter:drop-shadow(0 3px 0 rgba(0,0,0,.3));}
+  .advfoe.sleeping .advface{filter:grayscale(.65) opacity(.72);}
+  .advname{font-size:clamp(12px,2.3vw,16px);margin-top:3px;color:#fff;font-weight:600;}
+  .petbarwrap{height:12px;background:rgba(0,0,0,.4);border:2px solid rgba(0,0,0,.45);border-radius:20px;overflow:hidden;margin:6px auto 0;max-width:130px;}
+  .petbar{height:100%;width:0%;background:linear-gradient(90deg,#5fb04a,#8de06f);transition:width .35s;}
+  .hpwrap{font-size:clamp(15px,3.4vw,24px);letter-spacing:2px;min-height:1.3em;}
+  .advface.bounce{animation:advb .42s ease;} @keyframes advb{50%{transform:translateY(-15px) scale(1.09);}}
+  .advface.hit{animation:advh .42s ease;} @keyframes advh{0%,100%{transform:translateX(0);}25%{transform:translateX(-9px) rotate(-7deg);}75%{transform:translateX(9px) rotate(7deg);}}
+  .advface.grow{animation:advg .8s cubic-bezier(.2,1.4,.4,1);} @keyframes advg{0%{transform:scale(.5);}60%{transform:scale(1.4);}100%{transform:scale(1);}}
+
   /* ===== PIXEL BLOCKS (Minecraft-style textured voxels, no image files) ===== */
   .mcb{width:100%;height:100%;display:block;image-rendering:pixelated;}
   .revealgrid .rc,.bgrid8 .bc,.target8 .tc,.galgrid div{padding:0;overflow:hidden;}
@@ -372,10 +389,13 @@
       </div>
     </div>
     <div class="grid" style="margin-top:14px;">
-      <button class="btn gold" onclick="go('world')">🌍  MY WORLD</button>
-      <button class="btn diamond" onclick="go('map')">▶  PLAY &amp; EARN</button>
-      <button class="btn stone small" onclick="go('players')">👥  Switch Player (Benji / Juju)</button>
-      <button class="btn stone small" onclick="openSettings()">⚙️  Grown-Up Corner</button>
+      <button class="btn gold" onclick="startAdventure()">🗡️  PLAY  ▶</button>
+      <button class="btn diamond" onclick="go('world')">🌍  MY WORLD</button>
+      <div class="row">
+        <button class="btn stone small" onclick="go('players')">👥 Players</button>
+        <button class="btn stone small" onclick="go('map')">🎮 More</button>
+        <button class="btn stone small" onclick="openSettings()">⚙️ Grown-Up</button>
+      </div>
     </div>
     <p class="center muted" style="text-align:center;margin-top:16px;">Today's mission sounds: <span class="yellow">R · S · Z</span></p>
   </section>
@@ -473,6 +493,25 @@
         <span class="chip">💎 <span id="playDia">0</span></span>
       </div>
     </div>
+    <div id="advPanel" class="advpanel hidden">
+      <div class="advtop">
+        <span class="advlvl" id="advLvl">Level 1 · Grassland</span>
+        <span class="advprog" id="advProg"></span>
+      </div>
+      <div class="advscene">
+        <div class="advpet">
+          <span class="advface" id="advPetFace">🥚</span>
+          <div class="petbarwrap"><div class="petbar" id="advPetBar"></div></div>
+          <div class="advname" id="advPetName">Egg</div>
+        </div>
+        <div class="advfoe sleeping" id="advFoe">
+          <span class="advface" id="advFoeFace">🟢</span>
+          <div class="hpwrap" id="advFoeHp"></div>
+          <div class="advname" id="advFoeName">Slime</div>
+        </div>
+      </div>
+    </div>
+
     <div class="seg" id="levelSeg">
       <button data-lvl="word" class="on" onclick="setLevel('word')">🪵 Words</button>
       <button data-lvl="phrase" onclick="setLevel('phrase')">⛓️ Phrases</button>
@@ -678,7 +717,7 @@
 <!-- bottom nav -->
 <div class="nav" id="nav">
   <button data-s="home" onclick="go('home')"><span class="i">🏠</span>Home</button>
-  <button data-s="map" onclick="go('map')"><span class="i">🗺️</span>Play</button>
+  <button data-s="play" onclick="startAdventure()"><span class="i">🗡️</span>Play</button>
   <button data-s="world" onclick="go('world')"><span class="i">🌍</span>World</button>
   <button data-s="mobs" onclick="go('mobs')"><span class="i">🐾</span>Mobs</button>
 </div>
@@ -849,6 +888,7 @@ function freshState(){ return {
   advs:{}, base:{}, hotbar:{}, tamed:{}, reps:5, voiceName:"", modelVoice:"Justin",
   sound:true, slow:false, autoMode:true, name:"Benji", easy:false, creations:[], stats:null, music:true, blockBank:0,
   world:{name:"",plots:{},mats:{wood:0,stone:0},trophies:[]},
+  adv2:{level:0,petStage:0,petXP:0,cleared:0},
   cloud:{url:"",key:"",code:""}
 }; }
 let S=freshState();
@@ -932,6 +972,7 @@ function go(id){
   if(id!=='play' && playEl && playEl.classList.contains('active')){
     autoRunning=false; turnBusy=false; mic.listening=false; micStop(); musDuck(false);
     COOP.on=false; const cb=document.getElementById('coopBanner'); if(cb) cb.classList.add('hidden');
+    ADV2.on=false; hideAdvPanel();
     REVEAL.on=false; const rw2=document.getElementById('revealWrap'); if(rw2) rw2.classList.add('hidden');
     const wb=document.getElementById('wordBlock'); if(wb) wb.classList.remove('needtap');
     const o=document.getElementById('autoStart'); if(o) o.classList.add('hidden');
@@ -1043,7 +1084,7 @@ function testDeviceVoice(){ say("Hi Benji! Ready to break some blocks?",0.9); }
 let A={target:"R",level:"word",repsDone:0,rated:0,idx:0,mined:0,goal:10,deck:[],current:null};
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function startArtic(t){
-  markStreak(); COOP.on=false; REVEAL.on=false; setCoopBanner();
+  markStreak(); COOP.on=false; REVEAL.on=false; ADV2.on=false; setCoopBanner();
   { const rw=document.getElementById('revealWrap'); if(rw) rw.classList.add('hidden'); }
   A.target=t; A.level="word"; A.idx=0; A.mined=0; A.goal=S.easy?6:10;
   A.deck=shuffle(S.easy?WORDS[t].filter(x=>x.w.length<=6):WORDS[t]);
@@ -1079,8 +1120,9 @@ function loadWord(){
   document.querySelectorAll('#stars .star').forEach(s=>s.classList.remove('lit'));
   document.getElementById('mineBtn').disabled=true;
   const p=document.getElementById('playMeBtn'); p.disabled=true; p.style.opacity=.6;
-  setW('setText', REVEAL.on?"🧩 Say words to build the picture!":(COOP.on?"Take turns — both win! 🤝":(A.mined+" / "+A.goal+" blocks")));
-  { const _ls=document.getElementById('levelSeg'); if(_ls) _ls.style.display=REVEAL.on?'none':''; }
+  setW('setText', ADV2.on?"🗡️ Say the word!":(REVEAL.on?"🧩 Say words to build the picture!":(COOP.on?"Take turns — both win! 🤝":(A.mined+" / "+A.goal+" blocks"))));
+  { const _ls=document.getElementById('levelSeg'); if(_ls) _ls.style.display=(REVEAL.on||ADV2.on)?'none':''; }
+  if(ADV2.on) renderAdventure(); else hideAdvPanel();
   setCoopBanner();
   applyPlayMode();
   if(PLAYMODE==='auto' && autoRunning && document.getElementById('play').classList.contains('active')) setTimeout(runTurn,450);
@@ -1108,6 +1150,7 @@ function speakWord(cb){
   speakModel(t, A.level==="word", cb);
 }
 function mineIt(){
+  if(ADV2.on) return advStep();
   if(REVEAL.on) return revealStep();
   if(COOP.on) return coopMine();
   const gain=A.rated===3?3:A.rated===2?2:1;
@@ -1203,10 +1246,10 @@ function stopVoiceMine(){
 
 /* ================= 2-PLAYER: PLAY TOGETHER (take turns) ================= */
 let COOP={on:false,turn:0,dia:0,reps:3,names:['Benji','Juju'],emoji:['🧑','🧒']};
-function repsNow(){ if(COOP.on) return COOP.reps; if(REVEAL.on) return 3; return S.reps; }
+function repsNow(){ if(ADV2.on) return ADV2.reps; if(COOP.on) return COOP.reps; if(REVEAL.on) return 3; return S.reps; }
 function easyDeck(){ return WORDS.R.concat(WORDS.SZ).filter(x=>x.w.length<=6); }
 function startCoop(){
-  markStreak(); REVEAL.on=false;
+  markStreak(); REVEAL.on=false; ADV2.on=false;
   { const rw=document.getElementById('revealWrap'); if(rw) rw.classList.add('hidden'); }
   const ps=(players.length>=2)?players:[curPlayer(),curPlayer()];
   COOP.on=true; COOP.turn=0; COOP.dia=0; COOP.reps=3;
@@ -1527,7 +1570,7 @@ let PICKDIFF='easy';
 function setPickDiff(d){ PICKDIFF=d; document.querySelectorAll('#pickDiff button').forEach(b=>b.classList.toggle('on', b.getAttribute('data-d')===d)); }
 function buildDeck(diff){ const all=WORDS.R.concat(WORDS.SZ); return shuffle(diff==='easy'?all.filter(x=>x.w.length<=5):all); }
 function startBuild(target){
-  markStreak(); REVEAL.on=true; COOP.on=false; setCoopBanner();
+  markStreak(); REVEAL.on=true; COOP.on=false; ADV2.on=false; setCoopBanner();
   let deck = target==='R'?WORDS.R.slice() : target==='SZ'?WORDS.SZ.slice() : WORDS.R.concat(WORDS.SZ);
   if(S.easy){ const f=deck.filter(x=>x.w.length<=5); if(f.length>=6) deck=f; }
   A.target = (target==='SZ')?'SZ':(target==='R'?'R':'MIX'); A.level='word'; A.idx=0; A.mined=0; A.goal=99999; A.deck=shuffle(deck);
@@ -1540,7 +1583,7 @@ function startBuild(target){
   renderReveal();
 }
 function startReveal(patId, diff){
-  markStreak(); REVEAL.on=true; COOP.on=false; setCoopBanner();
+  markStreak(); REVEAL.on=true; COOP.on=false; ADV2.on=false; setCoopBanner();
   REVEAL.diff=diff||'easy';
   A.target='MIX'; A.level='word'; A.idx=0; A.mined=0; A.goal=99999; A.deck=buildDeck(REVEAL.diff);
   document.querySelectorAll('#levelSeg button').forEach(b=>b.classList.toggle('on',b.dataset.lvl==="word"));
@@ -1691,6 +1734,110 @@ function renameWorld(){
   let nm=null; try{ nm=window.prompt("Name your world:", S.world.name); }catch(e){ nm=null; }
   if(nm && nm.trim()){ S.world.name=nm.trim().slice(0,22); save(); renderWorld(); updateOwnerName(); toast("World renamed! 🌍"); }
 }
+
+/* ================= ADVENTURE MODE (grow a pet + beat levels/bosses) =================
+   The simple fun front: say words → mine toward a boss → beat it → level clears,
+   your pet grows, and you earn blocks for your Minecraft World. Reuses the guided
+   voice/listen engine (each spoken word = one hit). */
+const PETS={
+  benji:[{e:'🥚',n:'Dragon Egg'},{e:'🐲',n:'Baby Dragon'},{e:'🐉',n:'Dragon'},{e:'🔥🐉',n:'Fire Dragon'}],
+  juju: [{e:'🔩',n:'Robot Kit'},{e:'🤖',n:'Robot'},{e:'🦾',n:'Mega-Bot'},{e:'⚡🤖',n:'Ultra-Bot'}]
+};
+function petStagesFor(){ const p=curPlayer(); const key=(p&&p.avatar)||curId; return PETS[key]||PETS.benji; }
+const LEVELS=[
+  {n:'Grassland',  boss:{e:'🟢',n:'Slime',hp:3}},
+  {n:'Dark Cave',  boss:{e:'🕷️',n:'Cave Spider',hp:3}},
+  {n:'Dungeon',    boss:{e:'🧟',n:'Zombie',hp:4}},
+  {n:'Bone Pit',   boss:{e:'💀',n:'Skeleton',hp:4}},
+  {n:'Nether Fort',boss:{e:'🐷',n:'Piglin Brute',hp:5}},
+  {n:'The End',    boss:{e:'🐉',n:'Ender Dragon',hp:5}}
+];
+function levelAt(i){ return LEVELS[i%LEVELS.length]; }
+let ADV2={on:false, level:0, wordsDone:0, perLevel:5, inBoss:false, bossHP:0, reps:2};
+function ensureAdv(){
+  if(!S.adv2) S.adv2={level:0,petStage:0,petXP:0,cleared:0};
+  ['level','petStage','petXP','cleared'].forEach(k=>{ if(typeof S.adv2[k]!=='number') S.adv2[k]=0; });
+}
+function petStage(){ ensureAdv(); const st=petStagesFor(); return st[Math.min(st.length-1, S.adv2.petStage)]; }
+const PET_GROW_EVERY=2;      // pet grows a stage every N levels cleared
+const PET_XP_PER_STAGE=14;   // words to fill the little growth bar
+function hideAdvPanel(){ const ap=document.getElementById('advPanel'); if(ap) ap.classList.add('hidden'); }
+function startAdventure(){
+  ensureAdv(); markStreak(); REVEAL.on=false; COOP.on=false; ADV2.on=true;
+  ADV2.level=S.adv2.level; ADV2.wordsDone=0; ADV2.inBoss=false; ADV2.perLevel=S.easy?4:5;
+  A.target='MIX'; A.level='word'; A.idx=0; A.mined=0; A.goal=99999;
+  let deck=WORDS.R.concat(WORDS.SZ); if(S.easy){ const f=deck.filter(x=>x.w.length<=5); if(f.length>=6) deck=f; }
+  A.deck=shuffle(deck);
+  { const rw=document.getElementById('revealWrap'); if(rw) rw.classList.add('hidden'); }
+  document.querySelectorAll('#levelSeg button').forEach(b=>b.classList.toggle('on',b.dataset.lvl==="word"));
+  go('play'); setW('biomeChip','🗡️ Adventure');
+  loadWord(); renderAdventure();
+  if(PLAYMODE==='auto'){ autoRunning=false; showAutoStart(); } else { const o=document.getElementById('autoStart'); if(o)o.classList.add('hidden'); }
+}
+function renderAdventure(){
+  if(!ADV2.on){ hideAdvPanel(); return; }
+  ensureAdv();
+  const ap=document.getElementById('advPanel'); if(ap) ap.classList.remove('hidden');
+  const lv=levelAt(ADV2.level);
+  setW('advLvl','Lv '+(ADV2.level+1)+' · '+lv.n);
+  const ps=petStage(); setW('advPetFace', ps.e); setW('advPetName', ps.n);
+  const pb=document.getElementById('advPetBar'); if(pb) pb.style.width=Math.round((S.adv2.petXP%PET_XP_PER_STAGE)/PET_XP_PER_STAGE*100)+'%';
+  const foe=document.getElementById('advFoe');
+  if(ADV2.inBoss){
+    if(foe) foe.classList.remove('sleeping');
+    setW('advFoeFace', lv.boss.e); setW('advFoeName', 'Beat the '+lv.boss.n+'!');
+    let hp=''; for(let i=0;i<lv.boss.hp;i++){ hp += (i<ADV2.bossHP)?'❤️':'🖤'; }
+    setW('advFoeHp', hp);
+    setW('advProg','⚔️ Say it to HIT!');
+  } else {
+    if(foe) foe.classList.add('sleeping');
+    setW('advFoeFace', lv.boss.e); setW('advFoeName', lv.boss.n+' is asleep…');
+    setW('advFoeHp','');
+    let dots=''; for(let i=0;i<ADV2.perLevel;i++){ dots += (i<ADV2.wordsDone)?'🟩':'⬛'; }
+    setW('advProg','⛏️ '+dots);
+  }
+}
+function advStep(){
+  ensureAdv();
+  S.diamonds+=1; addXp(4); statBlock('MIX', A.current&&A.current.w);
+  shake(); sfx('break'); setTimeout(()=>sfx('collect'),100);
+  burst(document.getElementById('wordBlock'), ['#5fb04a','#f2c14e','#4fd6d6','#ffffff']);
+  S.adv2.petXP++;
+  if(!ADV2.inBoss){
+    ADV2.wordsDone++; bounceFace('advPetFace');
+    if(ADV2.wordsDone>=ADV2.perLevel) return enterBoss();
+    renderAdventure(); save(); A.idx++; loadWord(); return;
+  }
+  ADV2.bossHP--; hitFace('advFoeFace'); toast(pick(['POW! 💥','Hit! ⚔️','Take that! 💫','BOOM! 🔥']));
+  if(ADV2.bossHP<=0) return levelClear();
+  renderAdventure(); save(); A.idx++; loadWord();
+}
+function enterBoss(){
+  const lv=levelAt(ADV2.level); ADV2.inBoss=true; ADV2.bossHP=lv.boss.hp;
+  sfx('yourturn'); toast('⚔️ BOSS FIGHT! The '+lv.boss.n+' woke up!');
+  speakModel('Boss fight! Say the words to beat the '+lv.boss.n+'!', false);
+  renderAdventure(); save(); A.idx++; loadWord();
+}
+function levelClear(){
+  const lv=levelAt(ADV2.level); ensureAdv();
+  confetti(); sfx('win'); toast('🏆 You beat the '+lv.boss.n+'!');
+  S.adv2.cleared++; S.diamonds+=5; addXp(20);
+  // earn blocks for the Minecraft World (his favorite part — structures)
+  ensureWorld(); S.world.mats.wood=(S.world.mats.wood||0)+5; S.world.mats.stone=(S.world.mats.stone||0)+5;
+  const st=petStagesFor(); const newStage=Math.min(st.length-1, Math.floor(S.adv2.cleared/PET_GROW_EVERY));
+  let grew=false; if(newStage>S.adv2.petStage){ S.adv2.petStage=newStage; grew=true; }
+  advance('adv_clear_'+S.adv2.cleared,'🏆','Level Cleared!','You beat the '+lv.boss.n+'!');
+  ADV2.level++; S.adv2.level=ADV2.level; ADV2.wordsDone=0; ADV2.inBoss=false;
+  save();
+  setTimeout(function(){ toast('🧱 +5 🪵 +5 🪨 for your World!'); }, 1300);
+  if(grew){ const ps=petStage(); growFace('advPetFace'); setTimeout(function(){ toast('🎉 Your pet grew into a '+ps.n+'!'); speakModel('Wow! Your pet grew into a '+ps.n+'!', false); }, 2100); }
+  else { speakModel('Level cleared! Awesome talking!', false); }
+  renderAdventure();
+  setTimeout(function(){ if(!ADV2.on) return; A.idx++; loadWord(); renderAdventure(); }, grew?3200:2500);
+}
+function bounceFace(id){ const e=document.getElementById(id); if(!e)return; e.classList.remove('bounce'); void e.offsetWidth; e.classList.add('bounce'); }
+function hitFace(id){ const e=document.getElementById(id); if(!e)return; e.classList.remove('hit'); void e.offsetWidth; e.classList.add('hit'); }
+function growFace(id){ const e=document.getElementById(id); if(!e)return; e.classList.remove('grow'); void e.offsetWidth; e.classList.add('grow'); }
 
 /* ================= STATS / PROGRESS ================= */
 function ensureStats(){
