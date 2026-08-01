@@ -226,6 +226,7 @@
   @keyframes swingpk{0%{opacity:1;transform:rotate(-58deg) translateY(-6px);}60%{opacity:1;transform:rotate(18deg) translateY(4px);}100%{opacity:0;transform:rotate(6deg);}}
   .pxlogo{width:clamp(64px,16vw,120px);height:auto;image-rendering:pixelated;}
   .pxav{width:100%;height:100%;image-rendering:pixelated;border-radius:8px;display:block;}
+  .smav{image-rendering:auto;}
 
   /* video cave */
   .vidcard{background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(0,0,0,.22));border:3px solid rgba(0,0,0,.4);border-radius:8px;padding:12px;margin-bottom:14px;}
@@ -925,7 +926,49 @@ const AVATARS={
   juju:{rows:["................","...HHHHHHHHHH...","..HHHHHHHHHHHH..",".HHHHHHHHHHHHHH.",".HHHHHHHHHHHHHH.",".HHSSHHHHHHSSHH.",".HHSSSSSSSSSSHH.",".HSSSESSSSESSSH.",".HSSSSSSssSSSSH.",".HSSSSSSSSSSSSH.",".SSSSpTTTTpSSSS.",".SSSSSpppPSSSSS.",".....SSSSSS.....","...NNNNSSNNNN...","..NNNNNNNNNNNN..",".NNNNNNNNNNNNNN."],
     colors:{H:'#a17c4e',S:'#ecb98d',s:'#d89e70',E:'#3a5a92',T:'#ffffff',p:'#d07d69',P:'#d07d69',N:'#22346a'}}
 };
-function avatarSVG(id){ const a=AVATARS[id]; if(!a) return ''; let r=''; for(let y=0;y<a.rows.length;y++){ const row=a.rows[y]; for(let x=0;x<row.length;x++){ const c=a.colors[row[x]]; if(c) r+='<rect x="'+x+'" y="'+y+'" width="1" height="1" fill="'+c+'"/>'; } } return '<svg class="pxav" viewBox="0 0 16 16" shape-rendering="crispEdges" preserveAspectRatio="xMidYMid meet">'+r+'</svg>'; }
+/* ===== smoother, more-like-them avatars (vector, from their photos) ===== */
+const AV_BENJI = '<svg class="pxav smav" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">'
++'<path d="M11 34 C9 14 21 6 32 6 C43 6 55 14 53 34 C50 24 46 20 42 19 C39 24 25 24 22 19 C18 20 14 24 11 34 Z" fill="#2b231c"/>'
++'<ellipse cx="14" cy="35" rx="4" ry="5" fill="#e0a074"/><ellipse cx="50" cy="35" rx="4" ry="5" fill="#e0a074"/>'
++'<ellipse cx="32" cy="34" rx="18" ry="19" fill="#ecb488"/>'
++'<path d="M12 32 C11 14 22 7 32 7 C42 7 53 14 52 32 C49 23 45 20 41 20 C39 25 25 25 23 20 C18 21 14 24 12 32 Z" fill="#2b231c"/>'
++'<path d="M40 20 C45 20 49 24 52 32 C53 23 51 14 43 11 C45 15 43 19 40 20 Z" fill="#3d3025"/>'
++'<circle cx="25" cy="32" r="2.3" fill="#2a201a"/><circle cx="39" cy="32" r="2.3" fill="#2a201a"/>'
++'<circle cx="25.7" cy="31.3" r="0.7" fill="#fff"/><circle cx="39.7" cy="31.3" r="0.7" fill="#fff"/>'
++'<g fill="rgba(210,235,255,.28)" stroke="#16265c" stroke-width="2.6" stroke-linejoin="round">'
++'<rect x="17.5" y="26.5" width="13" height="11" rx="3.5"/><rect x="33.5" y="26.5" width="13" height="11" rx="3.5"/></g>'
++'<g fill="none" stroke="#16265c" stroke-width="2.6" stroke-linecap="round"><path d="M30.5 30 h3"/><path d="M17.5 29 l-4.5 -1"/><path d="M46.5 29 l4.5 -1"/></g>'
++'<path d="M32 35 q1.5 3.5 -1.5 4.5" stroke="#d3946a" stroke-width="1.8" fill="none" stroke-linecap="round"/>'
++'<path d="M22 43 Q32 54 42 43 Q32 48 22 43 Z" fill="#8a3535"/>'
++'<path d="M24.5 43.6 Q32 49 39.5 43.6 L39 45.6 Q32 48.6 25 45.6 Z" fill="#fff"/>'
++'<rect x="31.2" y="43.6" width="1.5" height="3.4" fill="#8a3535"/>'
++'<rect x="27" y="49" width="10" height="8" fill="#e0a074"/>'
++'<path d="M6 64 C6 55 18 50 32 50 C46 50 58 55 58 64 Z" fill="#cdddf2"/>'
++'<path d="M13 64 C13 56 22 52 32 52 C42 52 51 56 51 64 Z" fill="#1c3170"/>'
++'<path d="M29 50 L32 55 L35 50 L34 64 L30 64 Z" fill="#15234c"/>'
++'</svg>';
+const AV_JUJU = '<svg class="pxav smav" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">'
++'<path d="M10 42 C6 20 20 6 32 6 C44 6 58 20 54 42 L50 43 C53 24 47 17 43 16 L21 16 C17 17 11 24 14 43 Z" fill="#6d4a2b"/>'
++'<ellipse cx="15" cy="35" rx="4" ry="5" fill="#e8b48a"/><ellipse cx="49" cy="35" rx="4" ry="5" fill="#e8b48a"/>'
++'<ellipse cx="32" cy="35" rx="17" ry="18" fill="#f0c49c"/>'
++'<path d="M14 33 C12 15 23 8 32 8 C41 8 52 15 50 33 C48 25 45 23 42 25 C41 20 37 22 35.5 27 C33.5 20 29 22 27.5 27 C25.5 21 21 23 20 27 C18 23 16 26 14 33 Z" fill="#6d4a2b"/>'
++'<path d="M32 8 C41 8 50 16 50 31 C51 23 48 13 41 10 C44 13 41 15 32 15 Z" fill="#845a34"/>'
++'<path d="M14 31 C12 37 13 42 16.5 45 C14.5 39 15.5 35 17.5 33 Z" fill="#6d4a2b"/>'
++'<path d="M50 31 C52 37 51 42 47.5 45 C49.5 39 48.5 35 46.5 33 Z" fill="#6d4a2b"/>'
++'<rect x="21" y="30.5" width="7.5" height="2" rx="1" fill="#5a3c24"/><rect x="35.5" y="30.5" width="7.5" height="2" rx="1" fill="#5a3c24"/>'
++'<circle cx="25" cy="35" r="3.3" fill="#fff"/><circle cx="25" cy="35" r="2.1" fill="#3f74ad"/><circle cx="25" cy="35" r="1" fill="#182838"/><circle cx="25.7" cy="34.3" r="0.6" fill="#fff"/>'
++'<circle cx="39" cy="35" r="3.3" fill="#fff"/><circle cx="39" cy="35" r="2.1" fill="#3f74ad"/><circle cx="39" cy="35" r="1" fill="#182838"/><circle cx="39.7" cy="34.3" r="0.6" fill="#fff"/>'
++'<path d="M32 37.5 q1.4 3 -1.3 4" stroke="#e0a877" stroke-width="1.5" fill="none" stroke-linecap="round"/>'
++'<path d="M26.5 44 Q32 48.5 37.5 44" stroke="#9a4a3a" stroke-width="2.3" fill="none" stroke-linecap="round"/>'
++'<rect x="27" y="49" width="10" height="8" fill="#e8b48a"/>'
++'<path d="M8 64 C8 55 19 50 32 50 C45 50 56 55 56 64 Z" fill="#22346a"/>'
++'<path d="M26 50 Q32 56 38 50 L37 54 Q32 57.5 27 54 Z" fill="#1a294f"/>'
++'</svg>';
+function avatarSVG(id){
+  if(id==='benji') return AV_BENJI;
+  if(id==='juju') return AV_JUJU;
+  const a=AVATARS[id]; if(!a) return ''; let r=''; for(let y=0;y<a.rows.length;y++){ const row=a.rows[y]; for(let x=0;x<row.length;x++){ const c=a.colors[row[x]]; if(c) r+='<rect x="'+x+'" y="'+y+'" width="1" height="1" fill="'+c+'"/>'; } } return '<svg class="pxav" viewBox="0 0 16 16" shape-rendering="crispEdges" preserveAspectRatio="xMidYMid meet">'+r+'</svg>';
+}
 const DEFAULT_PLAYERS=[{id:'benji',name:'Benji',emoji:'🧑',avatar:'benji',easy:false,reps:5},{id:'juju',name:'Juju',emoji:'🧒',avatar:'juju',easy:true,reps:3}];
 let players=[], curId='benji';
 function loadPlayers(){
