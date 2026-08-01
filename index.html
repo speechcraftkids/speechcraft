@@ -791,12 +791,17 @@
     <h3>Mouth cues</h3>
     <p class="tiny"><b>R:</b> tongue back &amp; up, growl like a bear — rrr.<br><b>S:</b> smile, teeth close, tongue behind top teeth, quiet snake — sss.<br><b>Z:</b> like S but voice ON — buzzy bee, zzz.</p>
 
-    <h3>🧑‍🏫 Playing with a grown-up</h3>
-    <p class="tiny">Recommended. When ON, after each word you tap <b>👍 Clear</b> or <b>🔁 Try again</b> — that gives him real feedback and quietly records how clearly he's saying his sounds (see it on the Progress page). Turn OFF for solo "just play" fun.</p>
+    <h3>🎤 How he plays</h3>
+    <p class="tiny"><b>Game listens (recommended):</b> the game hears him and cheers automatically — no tapping. A grown-up sits nearby to help shape the sound, but doesn't press anything. <b>Coach mode:</b> after each word a grown-up taps 👍/🔁 to record exactly how clear it was (more work, best data for the SLP).</p>
     <div class="seg" id="coplaySeg">
-      <button onclick="setCoplay(true)" class="on">🧑‍🏫 With grown-up</button>
-      <button onclick="setCoplay(false)">🧒 Solo</button>
+      <button onclick="setCoplay(false)" class="on">🎤 Game listens</button>
+      <button onclick="setCoplay(true)">🧑‍🏫 Coach mode</button>
     </div>
+    <div class="seg" id="autoHearSeg" style="margin-top:6px;">
+      <button onclick="setAutoHear(true)">🔎 Auto-hear: ON</button>
+      <button onclick="setAutoHear(false)" class="on">Auto-hear: OFF</button>
+    </div>
+    <p class="tiny"><b>Auto-hear (experimental):</b> lets the game try to recognize the word for a smarter "I heard it!" and rough accuracy. Best on <b>Chromebook / Android</b>, less reliable on iPad — and it <b>never blocks him</b> (if it can't tell, he still moves on). Try it and see if it helps.</p>
 
     <h3>Say-it reps per block</h3>
     <div class="seg" id="repSeg">
@@ -933,7 +938,7 @@ function freshState(){ return {
   xp:0, level:1, diamonds:0, streak:0, lastPlayed:"", advCount:0,
   advs:{}, base:{}, hotbar:{}, tamed:{}, reps:5, voiceName:"", modelVoice:"Justin",
   sound:true, slow:false, autoMode:true, name:"Benji", easy:false, creations:[], stats:null, music:true, blockBank:0,
-  coplay:true, feedback:[],
+  coplay:false, autoHear:false, feedback:[],
   world:{name:"",plots:{},mats:{wood:0,stone:0},trophies:[]},
   adv2:{level:0,petStage:0,petXP:0,cleared:0},
   cloud:{url:"",key:"",code:""}
@@ -1197,7 +1202,11 @@ function speakWord(cb){
   speakModel(t, A.level==="word", cb);
 }
 /* ===== CO-PLAY: grown-up "Was it clear?" tap (real feedback + accuracy data) ===== */
-function wordDone(){ if(S.coplay){ showClarity(); return; } mineIt(); }
+function wordDone(){
+  if(S.coplay===true){ showClarity(); return; }         // coach mode: grown-up taps clear/again
+  if(A.recHeard){ ensureStats(); S.stats.attempts++; if(A.recMatched) S.stats.clear++; save(); } // auto-hear: soft accuracy
+  mineIt();
+}
 function showClarity(){ const b=document.getElementById('clarityBox'); if(b) b.classList.remove('hidden'); setAutoStatus('good','⭐ Nice try! Grown-up: was it clear?'); }
 function hideClarity(){ const b=document.getElementById('clarityBox'); if(b) b.classList.add('hidden'); }
 function clarity(ok){
@@ -1209,7 +1218,8 @@ function clarity(ok){
   if(autoRunning){ turnBusy=false; setTimeout(function(){ if(autoRunning) runTurn(); }, 350); }
   else { speakWord(); }
 }
-function setCoplay(on){ S.coplay=on; save(); document.querySelectorAll('#coplaySeg button').forEach((b,i)=>b.classList.toggle('on',(i===0)===on)); toast(on?"🧑‍🏫 Grown-up mode ON":"🧒 Solo mode ON"); }
+function setCoplay(on){ S.coplay=on; save(); document.querySelectorAll('#coplaySeg button').forEach((b,i)=>b.classList.toggle('on',(i===1)===on)); toast(on?"🧑‍🏫 Coach mode ON":"🎤 Game listens (auto)"); }
+function setAutoHear(on){ if(on && !SR){ toast("This device can't auto-hear — using generous listening."); } S.autoHear=on; save(); document.querySelectorAll('#autoHearSeg button').forEach((b,i)=>b.classList.toggle('on',(i===0)===on)); toast(on?"🔎 Auto-hear ON (experimental)":"Auto-hear OFF"); }
 /* end-of-session feedback (beta) */
 let _fbPick=null;
 function finishSession(){
@@ -1399,7 +1409,7 @@ async function autoGo(){
 function runTurn(){
   if(turnBusy || !autoRunning) return;
   if(!document.getElementById('play').classList.contains('active')) return;
-  turnBusy=true; A.repsDone=0;
+  turnBusy=true; A.repsDone=0; A.recHeard=false; A.recMatched=false;
   document.querySelectorAll('#swings .swing').forEach(r=>{r.classList.remove('on');r.textContent="";});
   const _wb=document.getElementById('wordBlock'); if(_wb) _wb.classList.remove('needtap');
   document.getElementById('cracks').style.opacity=0;
@@ -1411,11 +1421,17 @@ function doListen(){
   if(!mic.stream){ setAutoStatus('listen',"👆 Say it, then TAP the block!  ("+(repsNow()-A.repsDone)+" to go)"); const b=document.getElementById('wordBlock'); if(b) b.classList.add('needtap'); return; }
   musDuck(true);
   setAutoStatus('listen',"🎤 Your turn — say it!  (or tap the block)"); sfx('yourturn');
+  startRecog();
   setTimeout(function(){
     if(!autoRunning || !document.getElementById('play').classList.contains('active')) { turnBusy=false; return; }
-    listenForUtterance(function(spoke){
+    listenForUtterance(function(spoke, matched){
       if(!autoRunning){ turnBusy=false; return; }
-      if(spoke){ addSwing(A.repsDone+1); setAutoStatus('good', pick(["✅ Nice!","👍 Good job!","⭐ Yes!","🔥 Awesome!"])); }
+      if(spoke){
+        addSwing(A.repsDone+1);
+        if(matched===true){ A.recHeard=true; A.recMatched=true; setAutoStatus('good', pick(["✅ I heard it!","⭐ Yes!","🎉 Nailed it!"])); }
+        else if(matched===false){ A.recHeard=true; setAutoStatus('good', pick(["👍 Good try!","💪 Nice!","🙂 Keep going!"])); }
+        else { setAutoStatus('good', pick(["✅ Nice!","👍 Good job!","⭐ Yes!","🔥 Awesome!"])); }
+      }
       else { setAutoStatus('again',"👂 Say it, or tap the block!"); }
       if(A.repsDone>=repsNow()){
         musDuck(false);
@@ -1461,9 +1477,42 @@ function finishUtterance(spoke){
   const _b=document.getElementById('wordBlock'); if(_b) _b.classList.remove('needtap');
   try{ if(mic.rec && mic.rec.state!=='inactive') mic.rec.stop(); }catch(e){}
   setMicPulse(0);
-  const cb=mic.onDone; mic.onDone=null; if(cb) cb(spoke!==false);
+  const matched = (spoke!==false) ? recogMatch(A.current && A.current.w) : null;
+  stopRecog();
+  const cb=mic.onDone; mic.onDone=null; if(cb) cb(spoke!==false, matched);
 }
 function simulateUtterance(spoke){ if(mic.listening) finishUtterance(spoke!==false); }
+
+/* ===== OPTIONAL AUTO-HEAR: browser speech recognition (encouraging, never blocks) ===== */
+const SR = (typeof window!=='undefined') && (window.SpeechRecognition || window.webkitSpeechRecognition);
+let recog=null, recogOn=false, recogText='';
+function startRecog(){
+  if(!S.autoHear || !SR) return;
+  recogText='';
+  try{
+    recog=new SR(); recog.lang='en-US'; recog.interimResults=false; recog.maxAlternatives=3; recog.continuous=false;
+    recog.onresult=function(e){ try{ for(let i=0;i<e.results.length;i++){ for(let j=0;j<e.results[i].length;j++){ const t=e.results[i][j].transcript; if(t) recogText+=' '+t; } } }catch(err){} };
+    recog.onerror=function(){}; recog.onend=function(){ recogOn=false; };
+    recog.start(); recogOn=true;
+  }catch(e){ recogOn=false; recog=null; }
+}
+function stopRecog(){ try{ if(recog && recogOn) recog.stop(); }catch(e){} recogOn=false; }
+function editDist(a,b){ const m=a.length,n=b.length; const d=[]; for(let i=0;i<=m;i++){ d[i]=[i]; } for(let j=0;j<=n;j++){ d[0][j]=j; } for(let i=1;i<=m;i++){ for(let j=1;j<=n;j++){ d[i][j]=Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1]+(a[i-1]===b[j-1]?0:1)); } } return d[m][n]; }
+/* returns true (heard the word), false (heard something else), or null (no signal) */
+function recogMatch(word){
+  if(!S.autoHear || !SR) return null;
+  const heard=(recogText||'').toLowerCase().replace(/[^a-z ]/g,'').trim();
+  if(!heard) return null;
+  const w=(word||'').toLowerCase().replace(/[^a-z]/g,''); if(!w) return null;
+  if(heard.indexOf(w)>=0) return true;
+  const toks=heard.split(/\s+/).filter(Boolean);
+  for(let k=0;k<toks.length;k++){ const t=toks[k];
+    if(t===w) return true;
+    if(Math.abs(t.length-w.length)<=1 && editDist(t,w)<=1) return true;   // very close
+    if(t.charAt(0)===w.charAt(0) && editDist(t,w)<=2) return true;         // same start, close
+  }
+  return false;
+}
 function tapWord(){
   if(!document.getElementById('play').classList.contains('active')) return;
   if(mic.listening){ finishUtterance(true); return; }
@@ -2304,7 +2353,8 @@ function syncToggleUI(){
   document.querySelectorAll('#slowSeg button').forEach((b,i)=>b.classList.toggle('on',(i===1)===!!S.slow));
   document.querySelectorAll('#musicSeg button').forEach((b,i)=>b.classList.toggle('on',(i===0)===(S.music!==false)));
   document.querySelectorAll('#easySeg button').forEach(b=>b.classList.toggle('on',(b.getAttribute('data-e')==='easy')===!!S.easy));
-  document.querySelectorAll('#coplaySeg button').forEach((b,i)=>b.classList.toggle('on',(i===0)===(S.coplay!==false)));
+  document.querySelectorAll('#coplaySeg button').forEach((b,i)=>b.classList.toggle('on',(i===1)===(S.coplay===true)));
+  document.querySelectorAll('#autoHearSeg button').forEach((b,i)=>b.classList.toggle('on',(i===0)===(S.autoHear===true)));
 }
 
 /* ================= INIT ================= */
