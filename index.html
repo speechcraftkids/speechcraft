@@ -334,6 +334,29 @@
     background:rgba(0,0,0,.2);border:3px solid rgba(0,0,0,.35);border-radius:10px;padding:10px;}
   .trophyshelf .tr{font-size:clamp(24px,6vw,36px);line-height:1;}
 
+  /* ===== LEVEL JOURNEY (map) ===== */
+  .jhero{display:flex;align-items:center;gap:12px;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(0,0,0,.25));
+    border:3px solid rgba(0,0,0,.4);border-radius:16px;padding:12px;margin-bottom:14px;}
+  .jhero .jpet{width:clamp(52px,14vw,74px);height:clamp(52px,14vw,74px);flex:0 0 auto;}
+  .jhero .jpet svg{width:100%;height:100%;}
+  .jhero .jherotx{flex:1;min-width:0;}
+  .jhero .jnow{font-family:'Press Start 2P',monospace;font-size:clamp(11px,2.4vw,16px);color:#ffe14d;line-height:1.5;}
+  .jhero .jsub{font-size:clamp(12px,2.3vw,16px);color:#fff;margin-top:4px;}
+  .jhero .jplay{flex:0 0 auto;width:auto;padding:clamp(14px,2.4vw,20px) clamp(16px,3vw,26px);font-size:clamp(16px,3vw,22px);}
+  .jmap{display:flex;flex-direction:column;gap:12px;}
+  .jworld{background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(0,0,0,.22));border:3px solid rgba(0,0,0,.35);border-radius:14px;padding:12px;}
+  .jwname{font-family:'Press Start 2P',monospace;font-size:clamp(10px,2.2vw,14px);color:#8de06f;margin-bottom:8px;}
+  .jstones{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .jstone{width:clamp(48px,12vw,64px);height:clamp(48px,12vw,64px);border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:clamp(20px,5vw,28px);font-weight:700;border:3px solid rgba(0,0,0,.4);background:rgba(0,0,0,.3);color:#fff;
+    box-shadow:inset 0 -4px 0 rgba(0,0,0,.25);}
+  .jstone.done{background:linear-gradient(180deg,#5fb04a,#3e7a30);border-color:#2c5a22;}
+  .jstone.cur{background:linear-gradient(180deg,#f2c14e,#d69a1e);border-color:#a5761a;color:#3a2c00;cursor:pointer;
+    animation:jpulse 1.1s infinite;box-shadow:0 0 0 4px rgba(242,193,78,.35),inset 0 -4px 0 rgba(0,0,0,.2);}
+  @keyframes jpulse{50%{transform:scale(1.08);filter:brightness(1.12);}}
+  .jstone.lock{opacity:.45;}
+  .jconn{width:14px;height:5px;border-radius:3px;background:rgba(255,255,255,.25);flex:0 0 auto;}
+
   /* ===== CO-PLAY: grown-up "was it clear?" tap + session feedback ===== */
   .claritybox{background:linear-gradient(180deg,#2f5fa0,#1b3a66);border:3px solid rgba(0,0,0,.4);border-radius:14px;padding:12px;margin:10px 0;animation:pop .2s;}
   .clarityq{text-align:center;font-size:clamp(13px,2.5vw,18px);font-weight:700;margin-bottom:8px;}
@@ -398,7 +421,7 @@
       </div>
     </div>
     <div class="grid" style="margin-top:14px;">
-      <button class="btn gold" onclick="startAdventure()">🗡️  PLAY  ▶</button>
+      <button class="btn gold" onclick="go('journey')">🗺️  PLAY  ▶</button>
       <button class="btn diamond" onclick="go('world')">🌍  MY WORLD</button>
       <div class="row">
         <button class="btn stone small" onclick="go('players')">👥 Players</button>
@@ -407,6 +430,16 @@
       </div>
     </div>
     <p class="center muted" style="text-align:center;margin-top:16px;">Today's mission sounds: <span class="yellow">R · S · Z</span></p>
+  </section>
+
+  <!-- LEVEL JOURNEY (the map) -->
+  <section id="journey" class="screen">
+    <div class="topbar">
+      <button class="backbtn" onclick="go('home')">◀ Home</button>
+      <div class="hud"><span class="chip">⭐ <span id="jStars">0</span></span></div>
+    </div>
+    <div class="jhero" id="jHero"></div>
+    <div class="jmap" id="jMap"></div>
   </section>
 
   <!-- MY WORLD -->
@@ -741,7 +774,7 @@
 <!-- bottom nav -->
 <div class="nav" id="nav">
   <button data-s="home" onclick="go('home')"><span class="i">🏠</span>Home</button>
-  <button data-s="play" onclick="startAdventure()"><span class="i">🗡️</span>Play</button>
+  <button data-s="journey" onclick="go('journey')"><span class="i">🗺️</span>Play</button>
   <button data-s="world" onclick="go('world')"><span class="i">🌍</span>World</button>
   <button data-s="mobs" onclick="go('mobs')"><span class="i">🐾</span>Mobs</button>
 </div>
@@ -986,7 +1019,7 @@ function freshState(){ return {
   sound:true, slow:false, autoMode:true, name:"Benji", easy:false, creations:[], stats:null, music:true, blockBank:0,
   coplay:false, autoHear:false, feedback:[],
   world:{name:"",plots:{},mats:{wood:0,stone:0},trophies:[]},
-  adv2:{level:0,petStage:0,petXP:0,cleared:0},
+  adv2:{petStage:0}, journey:{done:{}},
   cloud:{url:"",key:"",code:""}
 }; }
 let S=freshState();
@@ -1084,6 +1117,7 @@ function go(id){
   if(id==='watch'){ renderWatch(); }
   if(id==='players'){ renderPlayers(); }
   if(id==='world'){ renderWorld(); }
+  if(id==='journey'){ renderJourney(); }
   if(id==='puzzles'){ renderPuzzleList(); }
   if(id==='gallery'){ renderGallery(); }
   if(id==='progress'){ renderProgress(); }
@@ -1916,96 +1950,144 @@ const PETS={
   juju: [{e:'🔩',n:'Robot Kit'},{e:'🤖',n:'Robot'},{e:'🦾',n:'Mega-Bot'},{e:'⚡🤖',n:'Ultra-Bot'}]
 };
 function petStagesFor(){ const p=curPlayer(); const key=(p&&p.avatar)||curId; return PETS[key]||PETS.benji; }
-const LEVELS=[
-  {n:'Grassland',  boss:{e:'🟢',n:'Slime',hp:3}},
-  {n:'Dark Cave',  boss:{e:'🕷️',n:'Cave Spider',hp:3}},
-  {n:'Dungeon',    boss:{e:'🧟',n:'Zombie',hp:4}},
-  {n:'Bone Pit',   boss:{e:'💀',n:'Skeleton',hp:4}},
-  {n:'Nether Fort',boss:{e:'🐷',n:'Piglin Brute',hp:5}},
-  {n:'The End',    boss:{e:'🐉',n:'Ender Dragon',hp:5}}
+/* WORLDS = degrees. Words-focused beta: climb by sound POSITION, short & snappy.
+   Each world = a rung of the speech ladder; last level of a world = its boss. */
+const JOURNEY=[
+  {n:'Warm-Up Meadow', pos:'initial', warm:true, levels:3, boss:{e:'🟢',n:'Slime',hp:2}},
+  {n:'Beginning Cave',  pos:'initial', levels:3, boss:{e:'🕷️',n:'Cave Spider',hp:3}},
+  {n:'Middle Mine',     pos:'medial',  levels:3, boss:{e:'🧟',n:'Zombie',hp:3}},
+  {n:'Ending Peak',     pos:'final',   levels:4, boss:{e:'💀',n:'Skeleton',hp:4}},
+  {n:'Blend Fortress',  pos:'blend',   levels:4, boss:{e:'🐉',n:'Ender Dragon',hp:5}}
 ];
-function levelAt(i){ return LEVELS[i%LEVELS.length]; }
-let ADV2={on:false, level:0, wordsDone:0, perLevel:5, inBoss:false, bossHP:0, reps:2};
-function ensureAdv(){
-  if(!S.adv2) S.adv2={level:0,petStage:0,petXP:0,cleared:0};
-  ['level','petStage','petXP','cleared'].forEach(k=>{ if(typeof S.adv2[k]!=='number') S.adv2[k]=0; });
+const LVL_WORDS=4, WARM_WORDS=3;
+const WORLD_DROP=['tree','house','mine','tower','castle'];  // a world-piece drops into his World each world cleared
+function wordPos(it){
+  const w=(it.w||'').toLowerCase(), hot=(it.hot||'').toLowerCase(); const i=w.indexOf(hot);
+  const cl=['tr','fr','gr','br','cr','dr','pr','sn','sm','sp','st','sw','sk','sl','sc'];
+  if(cl.indexOf(w.slice(0,2))>=0 && i<2) return 'blend';
+  if(i<=0) return 'initial';
+  if(i+hot.length>=w.length) return 'final';
+  return 'medial';
 }
+function poolFor(pos, warm){
+  const all=WORDS.R.concat(WORDS.SZ);
+  let f=all.filter(x=>wordPos(x)===pos);
+  if(warm){ const s=f.filter(x=>x.w.length<=4); if(s.length>=3) f=s; }
+  if(S.easy){ const s=f.filter(x=>x.w.length<=6); if(s.length>=3) f=s; }
+  if(f.length<3) f=all.filter(x=>wordPos(x)===pos);
+  if(f.length<3) f=all;
+  return shuffle(f);
+}
+/* journey progress */
+function ensureJourney(){ if(!S.journey) S.journey={done:{}}; if(!S.journey.done) S.journey.done={}; ensureAdv(); }
+function jKey(wi,li){ return wi+':'+li; }
+function jDone(wi,li){ ensureJourney(); return !!S.journey.done[jKey(wi,li)]; }
+function jList(){ const o=[]; JOURNEY.forEach((w,wi)=>{ for(let li=0;li<w.levels;li++) o.push({wi,li,w}); }); return o; }
+function jCurrent(){ const L=jList(); for(let k=0;k<L.length;k++){ if(!jDone(L[k].wi,L[k].li)) return L[k]; } return L[L.length-1]; }
+function jTotalDone(){ ensureJourney(); return Object.keys(S.journey.done).length; }
+function worldsCompleted(){ let c=0; JOURNEY.forEach((w,wi)=>{ let all=true; for(let li=0;li<w.levels;li++){ if(!jDone(wi,li)) all=false; } if(all) c++; }); return c; }
+function ensureAdv(){ if(!S.adv2) S.adv2={petStage:0}; if(typeof S.adv2.petStage!=='number') S.adv2.petStage=0; }
 function petStage(){ ensureAdv(); const st=petStagesFor(); return st[Math.min(st.length-1, S.adv2.petStage)]; }
-const PET_GROW_EVERY=2;      // pet grows a stage every N levels cleared
-const PET_XP_PER_STAGE=14;   // words to fill the little growth bar
 function hideAdvPanel(){ const ap=document.getElementById('advPanel'); if(ap) ap.classList.add('hidden'); }
-function startAdventure(){
-  ensureAdv(); markStreak(); REVEAL.on=false; COOP.on=false; ADV2.on=true;
-  ADV2.level=S.adv2.level; ADV2.wordsDone=0; ADV2.inBoss=false; ADV2.perLevel=S.easy?4:5;
-  A.target='MIX'; A.level='word'; A.idx=0; A.mined=0; A.goal=99999;
-  let deck=WORDS.R.concat(WORDS.SZ); if(S.easy){ const f=deck.filter(x=>x.w.length<=5); if(f.length>=6) deck=f; }
-  A.deck=shuffle(deck);
+function dropWorldPiece(wi){ ensureWorld(); const sid=WORLD_DROP[wi%WORLD_DROP.length];
+  for(let i=0;i<WORLD_PLOTS;i++){ if(!S.world.plots[i]){ S.world.plots[i]=sid; break; } }
+  S.world.mats.wood=(S.world.mats.wood||0)+5; S.world.mats.stone=(S.world.mats.stone||0)+5;
+}
+function renderJourney(){
+  ensureJourney();
+  const cur=jCurrent(); const w=JOURNEY[cur.wi]; const p=curPlayer();
+  setW('jStars', jTotalDone());
+  const hero=document.getElementById('jHero');
+  if(hero){
+    const face=(p&&p.avatar&&AVATARS[p.avatar])?avatarSVG(p.avatar):('<span style="font-size:44px;">'+petStage().e+'</span>');
+    hero.innerHTML='<div class="jpet">'+face+'</div>'
+      +'<div class="jherotx"><div class="jnow">'+w.n+'</div><div class="jsub">Next: Level '+(cur.li+1)+' of '+w.levels+'</div></div>'
+      +'<button class="btn gold jplay" onclick="startLevel('+cur.wi+','+cur.li+')">▶ PLAY</button>';
+  }
+  const map=document.getElementById('jMap'); if(!map) return; map.innerHTML='';
+  JOURNEY.forEach((wd,wi)=>{
+    const sec=document.createElement('div'); sec.className='jworld'; let stones='';
+    for(let li=0;li<wd.levels;li++){
+      if(li>0) stones+='<div class="jconn"></div>';
+      const done=jDone(wi,li), isCur=(wi===cur.wi&&li===cur.li), boss=(li===wd.levels-1);
+      const cls='jstone'+(done?' done':'')+(isCur?' cur':'')+((!done&&!isCur)?' lock':'');
+      const inner= done?'⭐' : (boss?wd.boss.e : (li+1));
+      stones+='<div class="'+cls+'"'+(isCur?(' onclick="startLevel('+wi+','+li+')"'):'')+'>'+inner+'</div>';
+    }
+    sec.innerHTML='<div class="jwname">'+(wi+1)+'. '+wd.n+'</div><div class="jstones">'+stones+'</div>';
+    map.appendChild(sec);
+  });
+}
+let ADV2={on:false, wi:0, li:0, isBoss:false, wordsDone:0, perLevel:4, inBoss:false, bossHP:0, reps:2};
+function startLevel(wi, li){
+  ensureJourney(); markStreak(); REVEAL.on=false; COOP.on=false; ADV2.on=true;
+  const w=JOURNEY[wi]; ADV2.wi=wi; ADV2.li=li; ADV2.isBoss=(li===w.levels-1); ADV2.inBoss=false;
+  ADV2.wordsDone=0; ADV2.perLevel=w.warm?WARM_WORDS:LVL_WORDS;
+  A.target='MIX'; A.level='word'; A.idx=0; A.mined=0; A.goal=99999; A.deck=poolFor(w.pos, w.warm);
   { const rw=document.getElementById('revealWrap'); if(rw) rw.classList.add('hidden'); }
   document.querySelectorAll('#levelSeg button').forEach(b=>b.classList.toggle('on',b.dataset.lvl==="word"));
-  go('play'); setW('biomeChip','🗡️ Adventure');
+  go('play'); setW('biomeChip','🗺️ '+w.n);
   loadWord(); renderAdventure();
   if(PLAYMODE==='auto'){ autoRunning=false; showAutoStart(); } else { const o=document.getElementById('autoStart'); if(o)o.classList.add('hidden'); }
 }
 function renderAdventure(){
   if(!ADV2.on){ hideAdvPanel(); return; }
-  ensureAdv();
   const ap=document.getElementById('advPanel'); if(ap) ap.classList.remove('hidden');
-  const lv=levelAt(ADV2.level);
-  setW('advLvl','Lv '+(ADV2.level+1)+' · '+lv.n);
+  const w=JOURNEY[ADV2.wi];
+  setW('advLvl', w.n+' · Level '+(ADV2.li+1)+'/'+w.levels);
   const ps=petStage(); setW('advPetFace', ps.e); setW('advPetName', ps.n);
-  const pb=document.getElementById('advPetBar'); if(pb) pb.style.width=Math.round((S.adv2.petXP%PET_XP_PER_STAGE)/PET_XP_PER_STAGE*100)+'%';
+  const pb=document.getElementById('advPetBar'); if(pb) pb.style.width=Math.round(ADV2.wordsDone/Math.max(1,ADV2.perLevel)*100)+'%';
   const foe=document.getElementById('advFoe');
-  if(ADV2.inBoss){
+  if(ADV2.isBoss && ADV2.inBoss){
     if(foe) foe.classList.remove('sleeping');
-    setW('advFoeFace', lv.boss.e); setW('advFoeName', 'Beat the '+lv.boss.n+'!');
-    let hp=''; for(let i=0;i<lv.boss.hp;i++){ hp += (i<ADV2.bossHP)?'❤️':'🖤'; }
-    setW('advFoeHp', hp);
+    setW('advFoeFace', w.boss.e); setW('advFoeName', 'Beat the '+w.boss.n+'!');
+    let hp=''; for(let i=0;i<w.boss.hp;i++){ hp += (i<ADV2.bossHP)?'❤️':'🖤'; } setW('advFoeHp', hp);
     setW('advProg','⚔️ Say it to HIT!');
   } else {
     if(foe) foe.classList.add('sleeping');
-    setW('advFoeFace', lv.boss.e); setW('advFoeName', lv.boss.n+' is asleep…');
+    if(ADV2.isBoss){ setW('advFoeFace', w.boss.e); setW('advFoeName', w.boss.n+' is asleep…'); }
+    else { setW('advFoeFace','🪨'); setW('advFoeName','Mine the blocks!'); }
     setW('advFoeHp','');
-    let dots=''; for(let i=0;i<ADV2.perLevel;i++){ dots += (i<ADV2.wordsDone)?'🟩':'⬛'; }
-    setW('advProg','⛏️ '+dots);
+    let dots=''; for(let i=0;i<ADV2.perLevel;i++){ dots += (i<ADV2.wordsDone)?'🟩':'⬛'; } setW('advProg','⛏️ '+dots);
   }
 }
 function advStep(){
-  ensureAdv();
+  ensureJourney();
   S.diamonds+=1; addXp(4); statBlock('MIX', A.current&&A.current.w);
   shake(); sfx('break'); setTimeout(()=>sfx('collect'),100);
   burst(document.getElementById('wordBlock'), ['#5fb04a','#f2c14e','#4fd6d6','#ffffff']);
-  S.adv2.petXP++;
   if(!ADV2.inBoss){
     ADV2.wordsDone++; bounceFace('advPetFace');
-    if(ADV2.wordsDone>=ADV2.perLevel) return enterBoss();
+    if(ADV2.wordsDone>=ADV2.perLevel){ if(ADV2.isBoss) return enterBoss(); return levelDone(); }
     renderAdventure(); save(); A.idx++; loadWord(); return;
   }
   ADV2.bossHP--; hitFace('advFoeFace'); toast(pick(['POW! 💥','Hit! ⚔️','Take that! 💫','BOOM! 🔥']));
-  if(ADV2.bossHP<=0) return levelClear();
+  if(ADV2.bossHP<=0) return levelDone();
   renderAdventure(); save(); A.idx++; loadWord();
 }
 function enterBoss(){
-  const lv=levelAt(ADV2.level); ADV2.inBoss=true; ADV2.bossHP=lv.boss.hp;
-  sfx('yourturn'); toast('⚔️ BOSS FIGHT! The '+lv.boss.n+' woke up!');
-  speakModel('Boss fight! Say the words to beat the '+lv.boss.n+'!', false);
+  const w=JOURNEY[ADV2.wi]; ADV2.inBoss=true; ADV2.bossHP=w.boss.hp;
+  sfx('yourturn'); toast('⚔️ BOSS! The '+w.boss.n+' woke up!');
+  speakModel('Boss! Say the words to beat the '+w.boss.n+'!', false);
   renderAdventure(); save(); A.idx++; loadWord();
 }
-function levelClear(){
-  const lv=levelAt(ADV2.level); ensureAdv();
-  confetti(); sfx('win'); toast('🏆 You beat the '+lv.boss.n+'!');
-  S.adv2.cleared++; S.diamonds+=5; addXp(20);
-  // earn blocks for the Minecraft World (his favorite part — structures)
-  ensureWorld(); S.world.mats.wood=(S.world.mats.wood||0)+5; S.world.mats.stone=(S.world.mats.stone||0)+5;
-  const st=petStagesFor(); const newStage=Math.min(st.length-1, Math.floor(S.adv2.cleared/PET_GROW_EVERY));
-  let grew=false; if(newStage>S.adv2.petStage){ S.adv2.petStage=newStage; grew=true; }
-  advance('adv_clear_'+S.adv2.cleared,'🏆','Level Cleared!','You beat the '+lv.boss.n+'!');
-  ADV2.level++; S.adv2.level=ADV2.level; ADV2.wordsDone=0; ADV2.inBoss=false;
-  save();
-  setTimeout(function(){ toast('🧱 +5 🪵 +5 🪨 for your World!'); }, 1300);
-  if(grew){ const ps=petStage(); growFace('advPetFace'); setTimeout(function(){ toast('🎉 Your pet grew into a '+ps.n+'!'); speakModel('Wow! Your pet grew into a '+ps.n+'!', false); }, 2100); }
-  else { speakModel('Level cleared! Awesome talking!', false); }
-  renderAdventure();
-  setTimeout(function(){ if(!ADV2.on) return; A.idx++; loadWord(); renderAdventure(); }, grew?3200:2500);
+function levelDone(){
+  ensureJourney(); const w=JOURNEY[ADV2.wi];
+  confetti(); sfx('win');
+  S.journey.done[jKey(ADV2.wi,ADV2.li)]=true; S.diamonds+=5; addXp(15);
+  const worldClear=ADV2.isBoss; let grew=false;
+  if(worldClear){
+    dropWorldPiece(ADV2.wi);
+    const wc=worldsCompleted(); const st=petStagesFor(); const ns=Math.min(st.length-1, wc);
+    if(ns>S.adv2.petStage){ S.adv2.petStage=ns; grew=true; }
+    advance('world_'+ADV2.wi,'🏆','World Cleared!','You cleared '+w.n+'!');
+    toast('🏆 '+w.n+' complete!');
+  } else { toast('⭐ Level done!'); }
+  ADV2.on=false; save();
+  speakModel(worldClear?('You cleared '+w.n+'!'):'Level up! Great talking!', false);
+  if(worldClear){ setTimeout(function(){ toast('🧱 +5 🪵 +5 🪨 for your World!'); }, 1200); }
+  if(grew){ setTimeout(function(){ const ps=petStage(); toast('🎉 Your pet grew into a '+ps.n+'!'); speakModel('Wow! Your pet grew into a '+ps.n+'!', false); }, 2000); }
+  setTimeout(function(){ go('journey'); }, worldClear?(grew?3200:2400):1500);
 }
 function bounceFace(id){ const e=document.getElementById(id); if(!e)return; e.classList.remove('bounce'); void e.offsetWidth; e.classList.add('bounce'); }
 function hitFace(id){ const e=document.getElementById(id); if(!e)return; e.classList.remove('hit'); void e.offsetWidth; e.classList.add('hit'); }
