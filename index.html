@@ -333,6 +333,19 @@
   .trophyshelf{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
     background:rgba(0,0,0,.2);border:3px solid rgba(0,0,0,.35);border-radius:10px;padding:10px;}
   .trophyshelf .tr{font-size:clamp(24px,6vw,36px);line-height:1;}
+  /* town: decorate menu, pick-up, villagers */
+  .decomenu{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:8px 0;}
+  .deco{width:clamp(46px,11vw,58px);height:clamp(46px,11vw,58px);display:flex;align-items:center;justify-content:center;
+    font-size:clamp(24px,6vw,32px);background:rgba(0,0,0,.28);border:3px solid rgba(0,0,0,.4);border-radius:12px;cursor:pointer;line-height:1;}
+  .deco:active{transform:translateY(2px);}
+  .deco.sel{outline:4px solid #ffe14d;background:rgba(255,225,77,.16);}
+  .deco.trash{background:rgba(214,75,75,.28);border-color:#932f2f;}
+  .wplot.pick{outline:4px solid #ffe14d;box-shadow:0 0 0 4px rgba(255,225,77,.3);}
+  .worldfolk .vil{font-size:clamp(24px,6vw,36px);line-height:1;}
+  .worldfolk .vil,.worldfolk .mob{animation:roam 5s ease-in-out infinite;will-change:transform;}
+  .worldfolk > *:nth-child(3n){animation-delay:-1.6s;}
+  .worldfolk > *:nth-child(3n+1){animation-delay:-3.3s;}
+  @keyframes roam{0%,100%{transform:translate(0,0);}25%{transform:translate(6px,-4px);}50%{transform:translate(11px,0);}75%{transform:translate(5px,-3px);}}
 
   /* ===== LEVEL JOURNEY (map) ===== */
   .jhero{display:flex;align-items:center;gap:12px;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(0,0,0,.25));
@@ -435,25 +448,31 @@
   <!-- LEVEL JOURNEY (the map) -->
   <section id="journey" class="screen">
     <div class="topbar">
-      <button class="backbtn" onclick="go('home')">◀ Home</button>
-      <div class="hud"><span class="chip">⭐ <span id="jStars">0</span></span></div>
+      <div style="display:flex;gap:8px;">
+        <button class="backbtn" onclick="go('players')">👥</button>
+        <button class="backbtn" onclick="openSettings()">⚙️</button>
+        <button class="backbtn" id="jCloud" onclick="openSettings()" title="Cloud backup">☁️</button>
+      </div>
+      <div class="hud">
+        <button class="backbtn" onclick="go('world')">🌍 World</button>
+        <span class="chip">⭐ <span id="jStars">0</span></span>
+      </div>
     </div>
     <div class="jhero" id="jHero"></div>
     <div class="jmap" id="jMap"></div>
   </section>
 
-  <!-- MY WORLD -->
+  <!-- MY TOWN (a living little community that grows as he practices) -->
   <section id="world" class="screen">
     <div class="topbar">
-      <button class="backbtn" onclick="go('home')">◀ Home</button>
+      <button class="backbtn" onclick="go('journey')">◀ Back</button>
       <div class="hud">
-        <span class="chip">🪵 <span id="wWood">0</span></span>
-        <span class="chip">🪨 <span id="wStone">0</span></span>
-        <span class="chip">💎 <span id="wDia">0</span></span>
+        <span class="chip">🏠 <span id="wBuildings">0</span></span>
+        <span class="chip">🧑 <span id="wFolk">0</span></span>
       </div>
     </div>
     <div class="worldtitle">
-      <span id="worldName">Benji's World</span>
+      <span id="worldName">Benji's Town</span>
       <button class="mini" onclick="renameWorld()" title="Rename">✏️</button>
     </div>
     <div class="worldscene">
@@ -461,15 +480,11 @@
       <div class="worldgrid" id="worldGrid"></div>
       <div class="worldfolk" id="worldFolk"></div>
     </div>
-    <div class="wstatus" id="wStatus">👇 Pick something to build, then tap a green spot!</div>
-    <h3 style="text-align:center;">🔨 Build Menu</h3>
-    <div class="buildmenu" id="buildMenu"></div>
-    <div id="trophyWrap" class="hidden">
-      <h3 style="text-align:center;">🏆 Trophy Shelf</h3>
-      <div class="trophyshelf" id="trophyShelf"></div>
-    </div>
-    <button class="btn diamond" onclick="go('map')" style="margin-top:14px;">🎤 Talk to earn more blocks!</button>
-    <p class="center tiny" style="text-align:center;">Everything you build stays here forever. 🌱</p>
+    <div class="wstatus" id="wStatus"></div>
+    <h3 style="text-align:center;">🎨 Decorate your town</h3>
+    <div class="decomenu" id="decoMenu"></div>
+    <button class="btn diamond" onclick="go('journey')" style="margin-top:14px;">🎮 Play to grow your town!</button>
+    <p class="center tiny" style="text-align:center;">Tap a building to pick it up, then tap a green spot to move it. 🏘️</p>
   </section>
 
   <!-- PLAYERS -->
@@ -531,7 +546,6 @@
       <button class="backbtn" onclick="go('map')">◀ Map</button>
       <div class="hud">
         <span class="chip" id="biomeChip">⛏️ R Mine</span>
-        <span class="chip" id="playMatChip">🪵 <span id="playMat">0</span></span>
         <span class="chip">💎 <span id="playDia">0</span></span>
       </div>
     </div>
@@ -773,7 +787,7 @@
 
 <!-- bottom nav -->
 <div class="nav" id="nav">
-  <button data-s="home" onclick="go('home')"><span class="i">🏠</span>Home</button>
+  <button data-s="journey" onclick="go('journey')"><span class="i">🏠</span>Home</button>
   <button data-s="journey" onclick="go('journey')"><span class="i">🗺️</span>Play</button>
   <button data-s="world" onclick="go('world')"><span class="i">🌍</span>World</button>
   <button data-s="mobs" onclick="go('mobs')"><span class="i">🐾</span>Mobs</button>
@@ -782,6 +796,24 @@
 <div class="toast" id="toast"></div>
 <div class="adv" id="adv"><div class="ic" id="advIc">🏆</div><div class="tx" id="advTx"></div></div>
 <div class="confetti" id="confetti"></div>
+
+<!-- TREASURE HOUSE -->
+<div class="modal" id="treasureModal">
+  <div class="inner" style="max-width:460px;">
+    <h2 id="treasureTitle">🏛️ My Treasures</h2>
+    <div class="statrow">
+      <div class="statbox"><div class="n" id="tDia">0</div><div class="t">💎 diamonds</div></div>
+      <div class="statbox"><div class="n" id="tStars">0</div><div class="t">⭐ stars</div></div>
+    </div>
+    <div class="statrow">
+      <div class="statbox"><div class="n" id="tTro">0</div><div class="t">🏆 treasures</div></div>
+      <div class="statbox"><div class="n" id="tAni">0</div><div class="t">🐾 animals</div></div>
+    </div>
+    <h3 style="text-align:center;">My Collection</h3>
+    <div class="trophyshelf" id="treasureShelf" style="max-height:210px;overflow:auto;"></div>
+    <button class="btn small" onclick="closeTreasure()" style="margin-top:12px;">Close</button>
+  </div>
+</div>
 
 <!-- END-OF-SESSION FEEDBACK (beta: capture what they like) -->
 <div class="modal" id="fbModal">
@@ -1845,7 +1877,8 @@ const STRUCTURES=[
   {id:'mine',  emoji:'⛏️',name:'Mine',   cost:{stone:4}},
   {id:'tower', emoji:'🗼',name:'Tower',  cost:{stone:5}},
   {id:'castle',emoji:'🏰',name:'Castle', cost:{stone:5,wood:5}},
-  {id:'diamond',emoji:'💎',name:'Diamond Block',cost:{diamond:1}}
+  {id:'diamond',emoji:'💎',name:'Diamond Block',cost:{diamond:1}},
+  {id:'vault', emoji:'🏛️',name:'Treasure House',cost:{}}
 ];
 /* per-kid theme unlocks — Juju loves robots, Benji gets Minecraft favorites */
 const THEME_STRUCT={
@@ -1862,7 +1895,11 @@ function ensureWorld(){
   if(typeof S.world.mats.wood!=='number') S.world.mats.wood=0;
   if(typeof S.world.mats.stone!=='number') S.world.mats.stone=0;
   if(!S.world.trophies) S.world.trophies=[];
-  if(!S.world.name) S.world.name=(S.name||'My')+"'s World";
+  if(!S.world.treasures) S.world.treasures=[];
+  if(!S.world.name || S.world.name===((S.name||'My')+"'s World")) S.world.name=(S.name||'My')+"'s Town";
+  // the Treasure House is always part of the town
+  var hasVault=false; for(var vk in S.world.plots){ if(S.world.plots[vk]==='vault') hasVault=true; }
+  if(!hasVault){ for(var vi=0; vi<WORLD_PLOTS; vi++){ if(!S.world.plots[vi]){ S.world.plots[vi]='vault'; break; } } }
 }
 function matForSound(t){ return t==='SZ'?'stone':'wood'; } /* R & MIX → wood, S/Z → stone */
 function earnMat(t,n){
@@ -1875,71 +1912,100 @@ function spendCost(cost){ ensureWorld(); for(const k in cost){ if(k==='diamond')
 function refundCost(cost){ ensureWorld(); for(const k in cost){ if(k==='diamond') S.diamonds=(S.diamonds||0)+cost[k]; else S.world.mats[k]=(S.world.mats[k]||0)+cost[k]; } }
 const MAT_EMO={wood:'🪵',stone:'🪨',diamond:'💎'};
 function costText(cost){ return Object.keys(cost).map(k=>cost[k]+' '+MAT_EMO[k]).join(' '); }
-let worldSel=null;
+/* ===== MY TOWN: a living community that grows as he practices ===== */
+let inHand=null; // {v:value, from:idx|null} — item picked up (move) or a decoration to place
+const DECOS=['🌳','🌲','🌷','🌻','🔥','🪨','⛲','🚧','🪧','🌈'];
+const VILLAGERS=['🧑‍🌾','👩‍🌾','🧒','👦','👧','🧑','👨‍🌾','🧑‍🔧','👷','🧙'];
+function townBuildings(){ ensureWorld(); let c=0; for(const k in S.world.plots){ if(structById(S.world.plots[k])) c++; } return c; }
 function renderWorld(){
   ensureWorld();
   setW('worldName', S.world.name);
-  setW('wWood',S.world.mats.wood||0); setW('wStone',S.world.mats.stone||0); setW('wDia',S.diamonds);
-  /* the land */
+  const buildings=townBuildings();
+  const tamed=Object.keys(S.tamed||{}).filter(k=>S.tamed[k]);
+  setW('wBuildings', buildings);
+  setW('wFolk', buildings + tamed.length + 1); // villagers(1 per building) + mobs + pet
+  /* the town */
   const grid=document.getElementById('worldGrid'); if(grid){ grid.innerHTML="";
     for(let i=0;i<WORLD_PLOTS;i++){
-      const cell=document.createElement('div'); const sid=S.world.plots[i]; const st=sid?structById(sid):null;
-      cell.className="wplot"+(st?" filled":""); cell.innerHTML=grassBlockSVG()+(st?'<span class="wstruct">'+st.emoji+'</span>':'');
+      const v=S.world.plots[i]; const st=v?structById(v):null; const emo=st?st.emoji:(v||'');
+      const cell=document.createElement('div');
+      cell.className="wplot"+(v?" filled":"")+((inHand&&inHand.from===i)?" pick":"");
+      cell.innerHTML=grassBlockSVG()+(emo?'<span class="wstruct">'+emo+'</span>':'');
       cell.onclick=(function(idx){ return function(){ worldPlot(idx); }; })(i);
       grid.appendChild(cell);
     }
   }
-  /* who lives here: avatar + tamed mobs */
+  /* who lives here: pet + tamed mobs + villagers */
   const folk=document.getElementById('worldFolk'); if(folk){ folk.innerHTML="";
     const p=curPlayer();
     const hero=document.createElement('div'); hero.className="hero";
     hero.innerHTML=(p&&p.avatar&&AVATARS[p.avatar])?avatarSVG(p.avatar):('<span style="font-size:38px;">'+(p?p.emoji:'🧑')+'</span>');
     folk.appendChild(hero);
-    const tamed=Object.keys(S.tamed||{}).filter(k=>S.tamed[k]);
-    if(tamed.length){ tamed.forEach(name=>{ const m=MOBS.find(x=>x.name===name); if(m){ const d=document.createElement('div'); d.className="mob"; d.textContent=m.e; folk.appendChild(d); } }); }
-    else { const l=document.createElement('div'); l.className="lbl2"; l.textContent="Tame mobs to bring them home! 🐾"; folk.appendChild(l); }
+    const pet=document.createElement('div'); pet.className="vil"; pet.textContent=petStage().e; folk.appendChild(pet);
+    tamed.forEach(name=>{ const m=MOBS.find(x=>x.name===name); if(m){ const d=document.createElement('div'); d.className="mob"; d.textContent=m.e; folk.appendChild(d); } });
+    for(let v=0; v<Math.min(buildings,10); v++){ const d=document.createElement('div'); d.className="vil"; d.textContent=VILLAGERS[v%VILLAGERS.length]; folk.appendChild(d); }
+    if(buildings===0 && !tamed.length){ const l=document.createElement('div'); l.className="lbl2"; l.textContent="Play to grow your town — friends will move in! 🏘️"; folk.appendChild(l); }
   }
-  /* build menu */
-  const menu=document.getElementById('buildMenu'); if(menu){ menu.innerHTML="";
-    allStruct().forEach(st=>{
-      const ok=canAfford(st.cost);
-      const b=document.createElement('div'); b.className="bitem"+(worldSel===st.id?" sel":"")+(ok?"":" cant");
-      b.innerHTML='<div class="be">'+st.emoji+'</div><div class="bn">'+st.name+'</div><div class="bc">'+costText(st.cost)+'</div>';
-      b.onclick=(function(id,okk){ return function(){ selectBuild(id,okk); }; })(st.id,ok);
+  /* decorate menu (free) */
+  const menu=document.getElementById('decoMenu'); if(menu){ menu.innerHTML="";
+    DECOS.forEach(e=>{
+      const b=document.createElement('div'); b.className="deco"+((inHand && inHand.from==null && inHand.v===e)?" sel":""); b.textContent=e;
+      b.onclick=(function(em){ return function(){ selectDeco(em); }; })(e);
       menu.appendChild(b);
     });
+    if(inHand){ const t=document.createElement('div'); t.className="deco trash"; t.textContent='🗑️'; t.onclick=trashHand; menu.appendChild(t); }
   }
-  /* trophies */
-  const tw=document.getElementById('trophyWrap'), ts=document.getElementById('trophyShelf');
-  if(tw&&ts){ if(S.world.trophies.length){ tw.classList.remove('hidden'); ts.innerHTML=S.world.trophies.map(e=>'<span class="tr">'+e+'</span>').join(''); } else { tw.classList.add('hidden'); } }
   updateWorldStatus();
-}
-function selectBuild(id,ok){
-  if(!ok){ const st=structById(id); toast("Talk more to earn "+costText(st.cost)+"! 🎤"); return; }
-  worldSel=(worldSel===id)?null:id; sfx('tick'); renderWorld();
 }
 function updateWorldStatus(){
   const el=document.getElementById('wStatus'); if(!el) return;
-  if(worldSel){ const st=structById(worldSel); el.className="wstatus pick"; el.textContent="👆 Tap a green spot to place your "+(st?st.emoji+' '+st.name:'block')+"!"; }
-  else { el.className="wstatus"; el.textContent="👇 Pick something to build, then tap a green spot!"; }
+  if(inHand){ el.className="wstatus pick"; el.textContent="👆 Tap a green spot to place "+inHand.v+"   (or 🗑️ to remove)"; }
+  else { el.className="wstatus"; el.textContent="Tap a decoration below, or tap a building to move it 🏘️"; }
 }
+function selectDeco(e){ if(inHand && inHand.from==null && inHand.v===e){ inHand=null; } else { inHand={v:e, from:null}; } sfx('tick'); renderWorld(); }
+function trashHand(){ if(!inHand) return; inHand=null; sfx('place'); save(); renderWorld(); }
 function worldPlot(idx){
   ensureWorld();
   const cur=S.world.plots[idx];
-  if(cur){ const st=structById(cur); if(st) refundCost(st.cost); delete S.world.plots[idx]; sfx('place'); toast("Picked it back up — blocks returned!"); save(); renderWorld(); return; }
-  if(!worldSel){ toast("Pick something to build below first! 👇"); return; }
-  const st=structById(worldSel); if(!st) return;
-  if(!canAfford(st.cost)){ toast("Talk more to earn "+costText(st.cost)+"! 🎤"); renderWorld(); return; }
-  spendCost(st.cost); S.world.plots[idx]=st.id; sfx('place'); setTimeout(()=>sfx('collect'),90);
-  buzz(15); save(); renderWorld();
-  toast("You built a "+st.name+"! 🎉");
-  if(Object.keys(S.world.plots).length>=6 && !S.advs.builder6) advance("builder6","🏗️","World Builder!","You placed 6 things in your world!");
+  if(cur==='vault'){ openTreasure(); return; }   // tap the Treasure House to see his hoard
+  if(inHand){
+    if(cur){ toast("That spot's taken — try an empty one!"); return; }
+    S.world.plots[idx]=inHand.v; const wasMove=(inHand.from!=null); inHand=null;
+    sfx('place'); setTimeout(()=>sfx('collect'),80); buzz(12); save(); renderWorld();
+    toast(wasMove?"Moved it! ✋":"Placed it! 🎨");
+    return;
+  }
+  if(cur){ inHand={v:cur, from:idx}; delete S.world.plots[idx]; sfx('tick'); renderWorld(); return; }
+  toast("Tap a decoration below to add it — or play to grow your town! 🎮");
 }
 function renameWorld(){
   ensureWorld();
-  let nm=null; try{ nm=window.prompt("Name your world:", S.world.name); }catch(e){ nm=null; }
-  if(nm && nm.trim()){ S.world.name=nm.trim().slice(0,22); save(); renderWorld(); updateOwnerName(); toast("World renamed! 🌍"); }
+  let nm=null; try{ nm=window.prompt("Name your town:", S.world.name); }catch(e){ nm=null; }
+  if(nm && nm.trim()){ S.world.name=nm.trim().slice(0,22); save(); renderWorld(); updateOwnerName(); toast("Town renamed! 🏘️"); }
 }
+/* Treasure House: where his earned gems, trophies, medals & animal friends live */
+const TREASURES=['💎','💠','🏆','👑','🥇','💍','🔷','🏅'];
+function openTreasure(){
+  ensureWorld();
+  setW('treasureTitle','🏛️ '+(S.name||'My')+"'s Treasures");
+  setW('tDia', S.diamonds||0);
+  setW('tStars', (typeof jTotalDone==='function')?jTotalDone():0);
+  setW('tTro', (S.world.treasures||[]).length);
+  const tamed=Object.keys(S.tamed||{}).filter(k=>S.tamed[k]);
+  setW('tAni', tamed.length);
+  const shelf=document.getElementById('treasureShelf');
+  if(shelf){
+    const items=[].concat(
+      S.world.treasures||[],
+      tamed.map(n=>{ const m=MOBS.find(x=>x.name===n); return m?m.e:'🐾'; }),
+      Object.keys(S.advs||{}).map(()=>'🏅')
+    );
+    shelf.innerHTML = items.length ? items.map(e=>'<span class="tr">'+e+'</span>').join('')
+      : '<p class="tiny" style="text-align:center;">Beat worlds to fill your treasure house with gems and trophies! 💎</p>';
+  }
+  const m=document.getElementById('treasureModal'); if(m) m.classList.add('show'); sfx('collect');
+}
+function closeTreasure(){ const m=document.getElementById('treasureModal'); if(m) m.classList.remove('show'); }
 
 /* ================= ADVENTURE MODE (grow a pet + beat levels/bosses) =================
    The simple fun front: say words → mine toward a boss → beat it → level clears,
@@ -1997,6 +2063,9 @@ function renderJourney(){
   ensureJourney();
   const cur=jCurrent(); const w=JOURNEY[cur.wi]; const p=curPlayer();
   setW('jStars', jTotalDone());
+  var jc=document.getElementById('jCloud'); if(jc){ var ok=(typeof cloudReady!=='undefined')&&cloudReady;
+    jc.textContent= ok?'☁️✓':'☁️!'; jc.style.background= ok?'rgba(60,150,85,.55)':'rgba(214,75,75,.5)';
+    jc.title= ok?'Progress is backed up to the cloud':'Not backed up yet — tap to turn on cloud save'; }
   const hero=document.getElementById('jHero');
   if(hero){
     const face=(p&&p.avatar&&AVATARS[p.avatar])?avatarSVG(p.avatar):('<span style="font-size:44px;">'+petStage().e+'</span>');
@@ -2078,6 +2147,7 @@ function levelDone(){
   const worldClear=ADV2.isBoss; let grew=false;
   if(worldClear){
     dropWorldPiece(ADV2.wi);
+    ensureWorld(); S.world.treasures.push(TREASURES[ADV2.wi % TREASURES.length]);   // a gem/trophy for his Treasure House
     const wc=worldsCompleted(); const st=petStagesFor(); const ns=Math.min(st.length-1, wc);
     if(ns>S.adv2.petStage){ S.adv2.petStage=ns; grew=true; }
     advance('world_'+ADV2.wi,'🏆','World Cleared!','You cleared '+w.n+'!');
@@ -2085,7 +2155,7 @@ function levelDone(){
   } else { toast('⭐ Level done!'); }
   ADV2.on=false; save();
   speakModel(worldClear?('You cleared '+w.n+'!'):'Level up! Great talking!', false);
-  if(worldClear){ setTimeout(function(){ toast('🧱 +5 🪵 +5 🪨 for your World!'); }, 1200); }
+  if(worldClear){ setTimeout(function(){ toast('🏠 A new building — and a villager moved into your town!'); }, 1200); }
   if(grew){ setTimeout(function(){ const ps=petStage(); toast('🎉 Your pet grew into a '+ps.n+'!'); speakModel('Wow! Your pet grew into a '+ps.n+'!', false); }, 2000); }
   setTimeout(function(){ go('journey'); }, worldClear?(grew?3200:2400):1500);
 }
@@ -2492,6 +2562,7 @@ document.querySelectorAll('#repSeg button').forEach(b=>b.classList.toggle('on',b
 syncToggleUI();
 PLAYMODE=(S.autoMode===false)?'manual':'auto';
 refreshHud();
+go('journey');   // open straight onto the Level Journey map (the kid's front door)
 autoConnectCloud();
 // unlock speech + audio on first interaction (mobile needs a gesture)
 function warmup1(){try{window.speechSynthesis.getVoices();}catch(e){} try{ac();}catch(e){} if(S.music!==false){ try{musStart();}catch(e){} }}
