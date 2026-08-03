@@ -1,6 +1,6 @@
 /* SpeechCraft service worker — makes the app installable & offline-capable.
    Same-origin app shell is cached (cache-first); cross-origin voice/fonts go to network. */
-const CACHE = 'speechcraft-v16';
+const CACHE = 'speechcraft-v17';
 const ASSETS = [
   './',
   './index.html',
@@ -37,17 +37,33 @@ self.addEventListener('fetch', function (e) {
   // Only handle our own files. Let voice/fonts/cloud (cross-origin) hit the network normally.
   if (url.origin !== self.location.origin) return;
 
-  e.respondWith(
-    caches.match(req).then(function (cached) {
-      if (cached) return cached;
-      return fetch(req).then(function (res) {
+  var accept = req.headers.get('accept') || '';
+  var isHTML = req.mode === 'navigate' || accept.indexOf('text/html') >= 0
+    || url.pathname === '/' || url.pathname.slice(-1) === '/' || url.pathname.indexOf('index.html') >= 0;
+
+  if (isHTML) {
+    // NETWORK-FIRST for the app itself, so new versions always show right away.
+    e.respondWith(
+      fetch(req).then(function (res) {
         var copy = res.clone();
         caches.open(CACHE).then(function (c) { c.put(req, copy); }).catch(function () {});
         return res;
       }).catch(function () {
-        // offline fallback: serve the app shell for navigations
-        if (req.mode === 'navigate') return caches.match('./index.html');
-      });
+        return caches.match(req).then(function (c) { return c || caches.match('./index.html'); });
+      })
+    );
+    return;
+  }
+
+  // CACHE-FIRST for static assets (icons, manifest); refresh in the background.
+  e.respondWith(
+    caches.match(req).then(function (cached) {
+      var net = fetch(req).then(function (res) {
+        var copy = res.clone();
+        caches.open(CACHE).then(function (c) { c.put(req, copy); }).catch(function () {});
+        return res;
+      }).catch(function () { return cached; });
+      return cached || net;
     })
   );
 });
