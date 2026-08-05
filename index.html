@@ -375,6 +375,8 @@
   .jhero .jnow{font-family:'Press Start 2P',monospace;font-size:clamp(11px,2.4vw,16px);color:#ffe14d;line-height:1.5;}
   .jhero .jsub{font-size:clamp(12px,2.3vw,16px);color:#fff;margin-top:4px;}
   .jhero .jplay{flex:0 0 auto;width:auto;padding:clamp(14px,2.4vw,20px) clamp(16px,3vw,26px);font-size:clamp(16px,3vw,22px);}
+  .btn.together{width:100%;margin:10px 0 2px;background:linear-gradient(180deg,#9a6be0,#6a3fc0);border-color:#4a2b8f;color:#fff;font-size:clamp(16px,3.4vw,22px);padding:clamp(12px,2.4vw,18px);box-shadow:0 4px 0 #3d2277;}
+  .btn.together:active{transform:translateY(3px);box-shadow:0 1px 0 #3d2277;}
   .jmap{display:flex;flex-direction:column;gap:12px;}
   .jworld{background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(0,0,0,.22));border:3px solid rgba(0,0,0,.35);border-radius:14px;padding:12px;}
   .jwname{font-family:'Press Start 2P',monospace;font-size:clamp(10px,2.2vw,14px);color:#8de06f;margin-bottom:8px;}
@@ -478,6 +480,7 @@
       </div>
     </div>
     <div class="jhero" id="jHero"></div>
+    <button class="btn together jtogether" onclick="startCoop()">👦🤝👧 &nbsp;Play Together</button>
     <div class="jmap" id="jMap"></div>
   </section>
 
@@ -1088,7 +1091,7 @@ function freshState(){ return {
   xp:0, level:1, diamonds:0, streak:0, lastPlayed:"", advCount:0,
   advs:{}, base:{}, hotbar:{}, tamed:{}, reps:5, voiceName:"", modelVoice:"Justin",
   sound:true, slow:false, autoMode:true, name:"Benji", easy:false, creations:[], stats:null, music:true, blockBank:0,
-  coplay:false, autoHear:true, feedback:[], checkMode:"coach", dinoSeen:0, mobSeen:0, oreSeen:0, gearSeen:0,
+  coplay:false, autoHear:true, feedback:[], checkMode:"coach", dinoSeen:0, mobSeen:0, oreSeen:0, gearSeen:0, coopStars:0,
   world:{name:"",plots:{},mats:{wood:0,stone:0},trophies:[]},
   adv2:{petStage:0}, journey:{done:{}},
   cloud:{url:"",key:"",code:""}
@@ -1335,7 +1338,7 @@ function buildSwings(){
   for(let i=0;i<repsNow();i++){const d=document.createElement('div');d.className="swing";d.onclick=()=>addSwing(i+1);wrap.appendChild(d);}
 }
 function addSwing(n){
-  if(n>A.repsDone){ ensureStats(); S.stats.says++; S.blockBank=(S.blockBank||0)+1; earnMat(A.target,1); }
+  if(n>A.repsDone && !COOP.on){ ensureStats(); S.stats.says++; S.blockBank=(S.blockBank||0)+1; earnMat(A.target,1); } // co-op is bonus fun — no individual stats
   A.repsDone=Math.max(A.repsDone,n);
   const sw=document.querySelectorAll('#swings .swing');
   sw.forEach((r,idx)=>{if(idx<A.repsDone){r.classList.add('on');r.textContent="⛏️";}});
@@ -1354,7 +1357,7 @@ function speakWord(cb){
 }
 /* ===== CO-PLAY: grown-up "Was it clear?" tap (real feedback + accuracy data) ===== */
 function wordDone(){
-  if(S.coplay===true){ showClarity(); return; }         // coach mode: grown-up taps clear/again
+  if(S.coplay===true && !COOP.on){ showClarity(); return; }   // grown-up-check mode (skipped in breezy co-op)
   if(A.recHeard){ ensureStats(); S.stats.attempts++; if(A.recMatched) S.stats.clear++; save(); } // auto-hear: soft accuracy
   mineIt();
 }
@@ -1498,20 +1501,35 @@ function stopVoiceMine(){
   if(btn){btn.textContent="🎤 Voice Mining: OFF  (tap to let the block hear you)";btn.classList.remove('diamond');}
 }
 
-/* ================= 2-PLAYER: PLAY TOGETHER (take turns) ================= */
-let COOP={on:false,turn:0,dia:0,reps:3,names:['Benji','Juju'],emoji:['🧑','🧒']};
-function repsNow(){ if(ADV2.on) return ADV2.reps; if(COOP.on) return COOP.reps; if(REVEAL.on) return 3; return S.reps; }
+/* ================= 2-PLAYER: PLAY TOGETHER (fun bonus levels, take turns) =================
+   A separate, breezy co-op just for fun — brothers take turns saying words to clear
+   themed BONUS LEVELS together. Kept 100% apart from each kid's own journey/collections. */
+const COOP_LEVELS=[
+  {e:'🏰',n:'Build the Castle',goal:8},
+  {e:'🚀',n:'Fuel the Rocket',goal:8},
+  {e:'🌈',n:'Make a Rainbow',goal:10},
+  {e:'🍎',n:'Fill the Fruit Basket',goal:8},
+  {e:'🐉',n:'Wake the Dragon',goal:10},
+  {e:'⛏️',n:'Diamond Dig',goal:12},
+  {e:'🏆',n:'Champion Round',goal:12}
+];
+let COOP={on:false,turn:0,names:['Benji','Juju'],emoji:['🧑','🧒'],lvl:0,prog:0};
+function repsNow(){ if(ADV2.on) return ADV2.reps; if(COOP.on) return 1; if(REVEAL.on) return 3; return S.reps; }
 function easyDeck(){ return WORDS.R.concat(WORDS.SZ).filter(x=>x.w.length<=6); }
+function coopLevelObj(){ return COOP_LEVELS[COOP.lvl % COOP_LEVELS.length]; }
+function coopGoal(){ return coopLevelObj().goal + Math.floor(COOP.lvl/COOP_LEVELS.length)*2; }
 function startCoop(){
   markStreak(); REVEAL.on=false; ADV2.on=false;
   { const rw=document.getElementById('revealWrap'); if(rw) rw.classList.add('hidden'); }
   const ps=(players.length>=2)?players:[curPlayer(),curPlayer()];
-  COOP.on=true; COOP.turn=0; COOP.dia=0; COOP.reps=3;
+  COOP.on=true; COOP.turn=0; COOP.lvl=S.coopStars||0; COOP.prog=0;
   COOP.names=[ps[0].name, ps[1]?ps[1].name:ps[0].name];
   COOP.emoji=[ps[0].emoji, ps[1]?ps[1].emoji:ps[0].emoji];
   A.target='MIX'; A.level='word'; A.idx=0; A.mined=0; A.goal=99999; A.deck=shuffle(easyDeck());
   document.querySelectorAll('#levelSeg button').forEach(b=>b.classList.toggle('on',b.dataset.lvl==="word"));
-  go('play'); setW('biomeChip','👬 2-Player'); loadWord();
+  go('play'); setW('biomeChip','👬 Bonus Level'); loadWord();
+  var Lo=coopLevelObj(); toast(Lo.e+' Bonus Level: '+Lo.n+'! Take turns! 🤝');
+  speakModel('Play together! '+Lo.n+'! Take turns.', false);
   if(PLAYMODE==='auto'){ autoRunning=false; showAutoStart(); } else { const o=document.getElementById('autoStart'); if(o)o.classList.add('hidden'); }
   setCoopBanner();
 }
@@ -1519,15 +1537,24 @@ function setCoopBanner(){
   const b=document.getElementById('coopBanner'); if(!b)return;
   if(!COOP.on){ b.classList.add('hidden'); return; }
   b.classList.remove('hidden');
-  b.textContent=(COOP.emoji[COOP.turn]||'👦')+" "+COOP.names[COOP.turn]+"'s turn   ·   💎 "+COOP.dia;
+  var Lo=coopLevelObj(), g=coopGoal(); var dots=''; for(var i=0;i<g;i++){ dots += (i<COOP.prog)?'🟩':'⬛'; }
+  b.innerHTML='<div>'+Lo.e+' '+Lo.n+'  ·  ⭐ '+(S.coopStars||0)+'</div><div style="font-size:.8em;letter-spacing:1px;">'+dots+'</div><div>'+(COOP.emoji[COOP.turn]||'👦')+' '+COOP.names[COOP.turn]+"'s turn</div>";
 }
 function coopMine(){
-  COOP.dia++; statBlock('MIX', A.current&&A.current.w); shake(); sfx('break'); setTimeout(()=>sfx('collect'),110);
+  COOP.prog++; shake(); sfx('break'); setTimeout(()=>sfx('collect'),110);
   burst(document.getElementById('wordBlock'),['#f2c14e','#5fb04a','#4fd6d6','#ffffff']);
-  toast(COOP.names[COOP.turn]+" did it! 💎 "+COOP.dia);
-  if(COOP.dia%10===0){ confetti(); sfx('win'); }
+  toast(COOP.names[COOP.turn]+" did it! 🤝");
+  if(COOP.prog>=coopGoal()) return coopLevelDone();
   COOP.turn^=1; A.idx++;
   loadWord(); setCoopBanner();
+}
+function coopLevelDone(){
+  var Lo=coopLevelObj(); confetti(); sfx('win');
+  S.coopStars=(S.coopStars||0)+1; save();   // shared "team stars" — NOT tied to either kid's collections
+  toast('🏆 You two cleared '+Lo.n+'! ⭐ Team Star!');
+  speakModel('Great teamwork! You cleared '+Lo.n+'! Next bonus level!', false);
+  COOP.lvl++; COOP.prog=0; COOP.turn=0; A.idx++;
+  setTimeout(function(){ if(COOP.on){ loadWord(); setCoopBanner(); } }, 1200);
 }
 
 /* ================= GUIDED (HANDS-FREE) PLAY ================= */
@@ -1595,7 +1622,7 @@ function doListen(){
       if(!autoRunning){ turnBusy=false; return; }
       // COACH: if we clearly heard a DIFFERENT word, gently re-model and let him try again
       // (capped so he's never stuck). matched===null = couldn't tell → don't punish.
-      var coach = (checkMode()==='coach') && S.autoHear && SR;
+      var coach = (checkMode()==='coach') && S.autoHear && SR && !COOP.on;
       if(spoke && matched===false && coach && (A.tries||0) < 1){
         A.tries=(A.tries||0)+1;
         setAutoStatus('again', pick(["👂 Almost — listen and try again!","🔁 So close! One more time.","👂 Let's say it nice and clear!"]));
