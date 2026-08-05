@@ -346,6 +346,17 @@
   .worldfolk > *:nth-child(3n){animation-delay:-1.6s;}
   .worldfolk > *:nth-child(3n+1){animation-delay:-3.3s;}
   @keyframes roam{0%,100%{transform:translate(0,0);}25%{transform:translate(6px,-4px);}50%{transform:translate(11px,0);}75%{transform:translate(5px,-3px);}}
+  .worldfolk .dinowalk{width:clamp(40px,10vw,58px);height:clamp(34px,8vw,48px);}
+  .dino{width:100%;height:100%;display:block;}
+  .dinogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;margin-top:10px;max-height:52vh;overflow:auto;padding:2px;}
+  .dinocard{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:6px 4px;text-align:center;}
+  .dinocard.locked{opacity:.55;}
+  .dinopic{position:relative;width:100%;height:52px;}
+  .dinopic .dino{height:52px;}
+  .dinopic .dlock{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:20px;}
+  .dinoname{font-size:clamp(10px,2vw,12px);color:#fff;margin-top:2px;line-height:1.1;}
+  .seg.col{flex-direction:column;gap:6px;}
+  .seg.col button{width:100%;text-align:left;padding:10px 12px;}
 
   /* ===== LEVEL JOURNEY (map) ===== */
   .jhero{display:flex;align-items:center;gap:12px;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(0,0,0,.25));
@@ -468,7 +479,7 @@
       <button class="backbtn" onclick="go('journey')">◀ Back</button>
       <div class="hud">
         <span class="chip">🏠 <span id="wBuildings">0</span></span>
-        <span class="chip">🧑 <span id="wFolk">0</span></span>
+        <span class="chip">🦕 <span id="wFolk">0</span></span>
       </div>
     </div>
     <div class="worldtitle">
@@ -481,6 +492,10 @@
       <div class="worldfolk" id="worldFolk"></div>
     </div>
     <div class="wstatus" id="wStatus"></div>
+    <div class="grid two" style="margin-top:10px;gap:8px;">
+      <button class="btn gold" onclick="openDinos()">🦖 Dino Park</button>
+      <button class="btn stone" onclick="openTreasure()">🏛️ Treasures</button>
+    </div>
     <h3 style="text-align:center;">🎨 Decorate your town</h3>
     <div class="decomenu" id="decoMenu"></div>
     <button class="btn diamond" onclick="go('journey')" style="margin-top:14px;">🎮 Play to grow your town!</button>
@@ -815,6 +830,17 @@
   </div>
 </div>
 
+<!-- DINO PARK -->
+<div class="modal" id="dinoModal">
+  <div class="inner" style="max-width:520px;">
+    <h2 id="dinoTitle">🦖 My Dino Park</h2>
+    <p class="tiny" id="dinoSub" style="text-align:center;margin-top:-4px;">0 of 25 dinosaurs discovered</p>
+    <p class="tiny" style="text-align:center;">Say your words nice and clear to discover more dinosaurs! 🦕</p>
+    <div class="dinogrid" id="dinoGrid"></div>
+    <button class="btn small" onclick="closeDinos()" style="margin-top:12px;">Close</button>
+  </div>
+</div>
+
 <!-- END-OF-SESSION FEEDBACK (beta: capture what they like) -->
 <div class="modal" id="fbModal">
   <div class="inner" style="max-width:420px;text-align:center;">
@@ -857,17 +883,14 @@
     <h3>Mouth cues</h3>
     <p class="tiny"><b>R:</b> tongue back &amp; up, growl like a bear — rrr.<br><b>S:</b> smile, teeth close, tongue behind top teeth, quiet snake — sss.<br><b>Z:</b> like S but voice ON — buzzy bee, zzz.</p>
 
-    <h3>🎤 How he plays</h3>
-    <p class="tiny"><b>Game listens (recommended):</b> the game hears him and cheers automatically — no tapping. A grown-up sits nearby to help shape the sound, but doesn't press anything. <b>Coach mode:</b> after each word a grown-up taps 👍/🔁 to record exactly how clear it was (more work, best data for the SLP).</p>
-    <div class="seg" id="coplaySeg">
-      <button onclick="setCoplay(false)" class="on">🎤 Game listens</button>
-      <button onclick="setCoplay(true)">🧑‍🏫 Coach mode</button>
+    <h3>🎤 How the game checks his words</h3>
+    <p class="tiny">Pick how strict the game is. All three still let him keep going so he never gets stuck or upset — the difference is how much it asks him to say the word clearly.</p>
+    <div class="seg col" id="checkSeg">
+      <button data-m="gentle" onclick="setCheckMode('gentle')">🙂 Gentle — cheers every try (easiest)</button>
+      <button data-m="coach" class="on" onclick="setCheckMode('coach')">🎯 Coach — listens &amp; asks for a clearer try (recommended)</button>
+      <button data-m="grownup" onclick="setCheckMode('grownup')">🧑‍🏫 Grown-up checks — you tap 👍/🔁 (most accurate)</button>
     </div>
-    <div class="seg" id="autoHearSeg" style="margin-top:6px;">
-      <button onclick="setAutoHear(true)">🔎 Auto-hear: ON</button>
-      <button onclick="setAutoHear(false)" class="on">Auto-hear: OFF</button>
-    </div>
-    <p class="tiny"><b>Auto-hear (experimental):</b> lets the game try to recognize the word for a smarter "I heard it!" and rough accuracy. Best on <b>Chromebook / Android</b>, less reliable on iPad — and it <b>never blocks him</b> (if it can't tell, he still moves on). Try it and see if it helps.</p>
+    <p class="tiny" id="checkNote"><b>Coach</b> uses the device's speech recognition: if it doesn't hear the word clearly, it gently says it again and gives him another try (then moves on kindly). Clear words earn dinosaurs faster. Works best on <b>Chromebook / Android / Chrome</b>. On <b>iPad/iPhone</b> speech recognition is unreliable — there, <b>Grown-up checks</b> is the strict option that always works.</p>
 
     <h3>Say-it reps per block</h3>
     <div class="seg" id="repSeg">
@@ -909,12 +932,14 @@
       <p class="tiny" style="margin:8px 0 0;">Don't count sound errors against him in reading/writing. Praise good tries — effort first.</p>
     </div>
 
-    <h3>☁️ Cloud Save (optional)</h3>
-    <p class="tiny">Paste your Supabase <b>Project URL</b> and <b>anon key</b> to sync Benji's progress across devices. (First, run the SQL from the setup note in your Supabase project.)</p>
-    <input type="text" id="supaUrl" placeholder="https://xxxx.supabase.co">
-    <input type="text" id="supaKey" placeholder="anon public key">
-    <input type="text" id="supaCode" placeholder="Benji's sync code (e.g. benji123)">
-    <button class="btn diamond small" onclick="connectCloud()" style="margin-top:6px;">☁️ Connect &amp; Sync</button>
+    <h3>☁️ Cloud Save</h3>
+    <div id="cloudManual">
+      <p class="tiny">Paste your Supabase <b>Project URL</b> and <b>anon key</b> to sync progress across devices. (First, run the SQL from the setup note in your Supabase project.)</p>
+      <input type="text" id="supaUrl" placeholder="https://xxxx.supabase.co">
+      <input type="text" id="supaKey" placeholder="anon public key">
+      <input type="text" id="supaCode" placeholder="sync code (e.g. benji)">
+      <button class="btn diamond small" onclick="connectCloud()" style="margin-top:6px;">☁️ Connect &amp; Sync</button>
+    </div>
     <div class="tiny" id="cloudStatus" style="margin-top:6px;">Not connected (saving on this device only).</div>
 
     <h3>Reset</h3>
@@ -1049,7 +1074,7 @@ function freshState(){ return {
   xp:0, level:1, diamonds:0, streak:0, lastPlayed:"", advCount:0,
   advs:{}, base:{}, hotbar:{}, tamed:{}, reps:5, voiceName:"", modelVoice:"Justin",
   sound:true, slow:false, autoMode:true, name:"Benji", easy:false, creations:[], stats:null, music:true, blockBank:0,
-  coplay:false, autoHear:false, feedback:[],
+  coplay:false, autoHear:true, feedback:[], checkMode:"coach", dinoSeen:0,
   world:{name:"",plots:{},mats:{wood:0,stone:0},trophies:[]},
   adv2:{petStage:0}, journey:{done:{}},
   cloud:{url:"",key:"",code:""}
@@ -1071,7 +1096,7 @@ function switchPlayer(id){
   try{ const raw=localStorage.getItem(saveKeyFor(id)); if(raw){ S=Object.assign(S,JSON.parse(raw)); had=true; } }catch(e){}
   const p=curPlayer(); if(!had) S.reps=p.reps; S.name=p.name; S.easy=p.easy;
   PLAYMODE=(S.autoMode===false)?'manual':'auto';
-  syncToggleUI(); refreshHud(); toast("Now playing as "+S.name+"!"); go('home');
+  syncToggleUI(); refreshHud(); cloudSwitchProfile(); toast("Now playing as "+S.name+"!"); go('home');
 }
 function renderPlayers(){
   const list=document.getElementById('playerList'); if(!list)return; list.innerHTML="";
@@ -1330,8 +1355,24 @@ function clarity(ok){
   if(autoRunning){ turnBusy=false; setTimeout(function(){ if(autoRunning) runTurn(); }, 350); }
   else { speakWord(); }
 }
-function setCoplay(on){ S.coplay=on; save(); document.querySelectorAll('#coplaySeg button').forEach((b,i)=>b.classList.toggle('on',(i===1)===on)); toast(on?"🧑‍🏫 Coach mode ON":"🎤 Game listens (auto)"); }
-function setAutoHear(on){ if(on && !SR){ toast("This device can't auto-hear — using generous listening."); } S.autoHear=on; save(); document.querySelectorAll('#autoHearSeg button').forEach((b,i)=>b.classList.toggle('on',(i===0)===on)); toast(on?"🔎 Auto-hear ON (experimental)":"Auto-hear OFF"); }
+/* ===== ACCURACY / STRICTNESS: one setting, three levels ===== */
+function checkMode(){ return S.checkMode || 'coach'; }
+function applyCheckMode(){
+  var m=checkMode();
+  S.coplay = (m==='grownup');           // grown-up taps clear/again
+  S.autoHear = (m==='coach') && !!SR;   // coach uses speech recognition where available
+  document.querySelectorAll('#checkSeg button').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-m')===m); });
+}
+function setCheckMode(m){
+  S.checkMode=m; applyCheckMode(); save();
+  if(m==='coach' && !SR){ toast("This device can't auto-listen — Coach will cheer every try. For strict checking, use Grown-up checks."); }
+  else if(m==='coach'){ toast("🎯 Coach mode — I'll ask for a clearer try."); }
+  else if(m==='grownup'){ toast("🧑‍🏫 Grown-up checks — tap 👍 or 🔁 after each word."); }
+  else { toast("🙂 Gentle mode — every try counts!"); }
+}
+/* legacy shims (kept so older buttons/state still work) */
+function setCoplay(on){ setCheckMode(on?'grownup':'coach'); }
+function setAutoHear(on){ setCheckMode(on?'coach':'gentle'); }
 /* end-of-session feedback (beta) */
 let _fbPick=null;
 function finishSession(){
@@ -1365,7 +1406,7 @@ function mineIt(){
   if(S.diamonds>=10 && !S.advs.dia10) advance("dia10","💎","Diamonds!","You collected 10 diamonds!");
   toast(pick(["Nice mining! +"+gain+"💎","Crisp! +"+gain+"💎","BOOM! Block broken!","Great job, Benji!"]));
   playCrack();
-  save();
+  save(); checkDinoUnlock();
   A.idx++;
   if(A.mined>=A.goal) return finishSet();
   loadWord();
@@ -1521,7 +1562,7 @@ async function autoGo(){
 function runTurn(){
   if(turnBusy || !autoRunning) return;
   if(!document.getElementById('play').classList.contains('active')) return;
-  turnBusy=true; A.repsDone=0; A.recHeard=false; A.recMatched=false;
+  turnBusy=true; A.repsDone=0; A.recHeard=false; A.recMatched=false; A.tries=0;
   document.querySelectorAll('#swings .swing').forEach(r=>{r.classList.remove('on');r.textContent="";});
   const _wb=document.getElementById('wordBlock'); if(_wb) _wb.classList.remove('needtap');
   document.getElementById('cracks').style.opacity=0;
@@ -1538,6 +1579,17 @@ function doListen(){
     if(!autoRunning || !document.getElementById('play').classList.contains('active')) { turnBusy=false; return; }
     listenForUtterance(function(spoke, matched){
       if(!autoRunning){ turnBusy=false; return; }
+      // COACH: if we clearly heard a DIFFERENT word, gently re-model and let him try again
+      // (capped so he's never stuck). matched===null = couldn't tell → don't punish.
+      var coach = (checkMode()==='coach') && S.autoHear && SR;
+      if(spoke && matched===false && coach && (A.tries||0) < 1){
+        A.tries=(A.tries||0)+1;
+        setAutoStatus('again', pick(["👂 Almost — listen and try again!","🔁 So close! One more time.","👂 Let's say it nice and clear!"]));
+        buzz(10);
+        setTimeout(function(){ if(autoRunning) speakWord(function(){ if(autoRunning) doListen(); }); }, 450);
+        return;
+      }
+      A.tries=0;
       if(spoke){
         addSwing(A.repsDone+1);
         if(matched===true){ A.recHeard=true; A.recMatched=true; setAutoStatus('good', pick(["✅ I heard it!","⭐ Yes!","🎉 Nailed it!"])); }
@@ -1620,8 +1672,9 @@ function recogMatch(word){
   const toks=heard.split(/\s+/).filter(Boolean);
   for(let k=0;k<toks.length;k++){ const t=toks[k];
     if(t===w) return true;
-    if(Math.abs(t.length-w.length)<=1 && editDist(t,w)<=1) return true;   // very close
-    if(t.charAt(0)===w.charAt(0) && editDist(t,w)<=2) return true;         // same start, close
+    if(Math.abs(t.length-w.length)<=1 && editDist(t,w)<=1) return true;   // very close = accept
+    // For short target words, allow one extra slip so we don't nag on a good try
+    if(w.length<=3 && t.charAt(0)===w.charAt(0) && editDist(t,w)<=1) return true;
   }
   return false;
 }
@@ -1923,7 +1976,7 @@ function renderWorld(){
   const buildings=townBuildings();
   const tamed=Object.keys(S.tamed||{}).filter(k=>S.tamed[k]);
   setW('wBuildings', buildings);
-  setW('wFolk', buildings + tamed.length + 1); // villagers(1 per building) + mobs + pet
+  setW('wFolk', dinosEarned().length + tamed.length + 1); // earned dinos + tamed mobs + pet
   /* the town */
   const grid=document.getElementById('worldGrid'); if(grid){ grid.innerHTML="";
     for(let i=0;i<WORLD_PLOTS;i++){
@@ -1935,16 +1988,17 @@ function renderWorld(){
       grid.appendChild(cell);
     }
   }
-  /* who lives here: pet + tamed mobs + villagers */
+  /* who lives here: pet + EARNED dinos + tamed mobs (everything here is earned) */
   const folk=document.getElementById('worldFolk'); if(folk){ folk.innerHTML="";
     const p=curPlayer();
     const hero=document.createElement('div'); hero.className="hero";
     hero.innerHTML=(p&&p.avatar&&AVATARS[p.avatar])?avatarSVG(p.avatar):('<span style="font-size:38px;">'+(p?p.emoji:'🧑')+'</span>');
     folk.appendChild(hero);
     const pet=document.createElement('div'); pet.className="vil"; pet.textContent=petStage().e; folk.appendChild(pet);
+    const dinos=dinosEarned(); const showD=dinos.slice(Math.max(0,dinos.length-8)); // roam the most recent up to 8
+    showD.forEach(dn=>{ const d=document.createElement('div'); d.className="dinowalk"; d.title=dn.n; d.innerHTML=dinoSVG(dn.fam,dn.c); folk.appendChild(d); });
     tamed.forEach(name=>{ const m=MOBS.find(x=>x.name===name); if(m){ const d=document.createElement('div'); d.className="mob"; d.textContent=m.e; folk.appendChild(d); } });
-    for(let v=0; v<Math.min(buildings,10); v++){ const d=document.createElement('div'); d.className="vil"; d.textContent=VILLAGERS[v%VILLAGERS.length]; folk.appendChild(d); }
-    if(buildings===0 && !tamed.length){ const l=document.createElement('div'); l.className="lbl2"; l.textContent="Play to grow your town — friends will move in! 🏘️"; folk.appendChild(l); }
+    if(!dinos.length && !tamed.length){ const l=document.createElement('div'); l.className="lbl2"; l.textContent="Play and say your words clearly — dinosaurs will come live here! 🦕"; folk.appendChild(l); }
   }
   /* decorate menu (free) */
   const menu=document.getElementById('decoMenu'); if(menu){ menu.innerHTML="";
@@ -2006,6 +2060,167 @@ function openTreasure(){
   const m=document.getElementById('treasureModal'); if(m) m.classList.add('show'); sfx('collect');
 }
 function closeTreasure(){ const m=document.getElementById('treasureModal'); if(m) m.classList.remove('show'); }
+
+/* ================= DINOSAURS (earned by playing) =================
+   25 kid-favorite dinos. Each is drawn as a simple, cute silhouette (family
+   shape + its own color). They UNLOCK by playing — clearing levels and, above
+   all, saying words CLEARLY — so accuracy literally earns dinosaurs. Earned
+   dinos roam the town; the full set lives in the Dino Park. */
+const DINOS=[
+  {n:"T. Rex",fam:"rex",c:"#e0523f"},
+  {n:"Triceratops",fam:"trike",c:"#5aa64a"},
+  {n:"Velociraptor",fam:"raptor",c:"#c9a24b"},
+  {n:"Stegosaurus",fam:"steg",c:"#3fa4a0"},
+  {n:"Brachiosaurus",fam:"longneck",c:"#4f83c2"},
+  {n:"Spinosaurus",fam:"sail",c:"#e0863f"},
+  {n:"Ankylosaurus",fam:"steg",c:"#8a6a44"},
+  {n:"Pteranodon",fam:"winged",c:"#8e6fc0"},
+  {n:"Brontosaurus",fam:"longneck",c:"#6aa153"},
+  {n:"Allosaurus",fam:"rex",c:"#d46a3a"},
+  {n:"Parasaurolophus",fam:"duckbill",c:"#e0b23a"},
+  {n:"Pachycephalosaurus",fam:"dome",c:"#b98a52"},
+  {n:"Dilophosaurus",fam:"rex",c:"#6db84a"},
+  {n:"Gallimimus",fam:"raptor",c:"#9aa0a6"},
+  {n:"Diplodocus",fam:"longneck",c:"#5b6b7a"},
+  {n:"Carnotaurus",fam:"rex",c:"#c8433f"},
+  {n:"Giganotosaurus",fam:"rex",c:"#9e3b34"},
+  {n:"Mosasaurus",fam:"finned",c:"#2f5f9e"},
+  {n:"Baryonyx",fam:"sail",c:"#3f9a8e"},
+  {n:"Therizinosaurus",fam:"rex",c:"#7d8a3f"},
+  {n:"Iguanodon",fam:"duckbill",c:"#b5793f"},
+  {n:"Compsognathus",fam:"raptor",c:"#b5c24a"},
+  {n:"Utahraptor",fam:"raptor",c:"#b5652f"},
+  {n:"Styracosaurus",fam:"trike",c:"#c14b9a"},
+  {n:"Archaeopteryx",fam:"winged",c:"#d9a63f"}
+];
+function _shade(hex,f){ try{ var n=parseInt(hex.slice(1),16); var r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+  r=Math.round(r*f);g=Math.round(g*f);b=Math.round(b*f); return 'rgb('+r+','+g+','+b+')'; }catch(e){ return hex; } }
+/* Cute silhouette built from simple primitives (reliable everywhere). viewBox 0 0 120 100, facing left. */
+function dinoSVG(fam,color){
+  var d=_shade(color,0.72), eye='<circle cx="26" cy="42" r="3.4" fill="#fff"/><circle cx="25" cy="42" r="1.7" fill="#20303a"/>';
+  var s='';
+  function leg(x,y,w,h){ return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="3" fill="'+d+'"/>'; }
+  if(fam==="rex"){
+    s='<polygon points="70,58 118,64 72,74" fill="'+color+'"/>'
+      +leg(46,70,11,22)+leg(60,70,11,22)
+      +'<ellipse cx="58" cy="58" rx="27" ry="20" fill="'+color+'"/>'
+      +'<rect x="30" y="56" width="12" height="6" rx="3" fill="'+d+'"/>'
+      +'<ellipse cx="24" cy="44" rx="17" ry="14" fill="'+color+'"/>'
+      +'<path d="M8,44 L24,40 L24,54 Z" fill="'+color+'"/>'
+      +'<rect x="8" y="47" width="14" height="5" rx="2" fill="'+d+'"/>'+eye;
+  } else if(fam==="sail"){
+    s='<path d="M40,56 Q60,6 86,56 Z" fill="'+d+'"/>'
+      +'<polygon points="72,58 118,64 74,74" fill="'+color+'"/>'
+      +leg(46,70,11,22)+leg(60,70,11,22)
+      +'<ellipse cx="58" cy="60" rx="27" ry="18" fill="'+color+'"/>'
+      +'<ellipse cx="24" cy="50" rx="16" ry="12" fill="'+color+'"/>'
+      +'<path d="M4,50 L24,46 L24,58 Z" fill="'+color+'"/>'
+      +'<rect x="4" y="52" width="20" height="5" rx="2" fill="'+d+'"/>'+eye;
+  } else if(fam==="raptor"){
+    s='<polygon points="66,54 116,48 70,64" fill="'+color+'"/>'
+      +leg(48,64,8,26)+leg(62,66,8,24)
+      +'<ellipse cx="58" cy="56" rx="22" ry="14" fill="'+color+'"/>'
+      +'<path d="M40,50 L30,30 L38,30 L48,50 Z" fill="'+color+'"/>'
+      +'<ellipse cx="28" cy="30" rx="13" ry="10" fill="'+color+'"/>'
+      +'<path d="M12,32 L28,28 L28,38 Z" fill="'+color+'"/>'
+      +'<rect x="12" y="33" width="16" height="4.5" rx="2" fill="'+d+'"/>'
+      +'<circle cx="30" cy="28" r="3.2" fill="#fff"/><circle cx="29" cy="28" r="1.6" fill="#20303a"/>';
+  } else if(fam==="dome"){
+    s='<polygon points="66,56 114,52 70,66" fill="'+color+'"/>'
+      +leg(48,66,9,24)+leg(62,66,9,24)
+      +'<ellipse cx="58" cy="58" rx="23" ry="15" fill="'+color+'"/>'
+      +'<path d="M42,52 L34,34 L42,34 L50,52 Z" fill="'+color+'"/>'
+      +'<circle cx="30" cy="30" r="15" fill="'+color+'"/>'
+      +'<path d="M14,34 L30,30 L30,40 Z" fill="'+color+'"/>'
+      +'<rect x="14" y="35" width="16" height="4.5" rx="2" fill="'+d+'"/>'
+      +'<circle cx="30" cy="30" r="3.2" fill="#fff"/><circle cx="29" cy="30" r="1.6" fill="#20303a"/>';
+  } else if(fam==="longneck"){
+    s='<polygon points="84,60 120,66 84,72" fill="'+color+'"/>'
+      +leg(40,74,11,22)+leg(56,74,11,22)+leg(72,72,11,22)+leg(28,72,11,22)
+      +'<ellipse cx="60" cy="62" rx="30" ry="20" fill="'+color+'"/>'
+      +'<path d="M40,52 L28,50 L14,20 L24,16 L34,46 L48,50 Z" fill="'+color+'"/>'
+      +'<circle cx="18" cy="16" r="9" fill="'+color+'"/>'
+      +'<rect x="6" y="15" width="12" height="5" rx="2" fill="'+d+'"/>'
+      +'<circle cx="16" cy="13" r="2.8" fill="#fff"/><circle cx="15" cy="13" r="1.4" fill="#20303a"/>';
+  } else if(fam==="trike"){
+    s='<polygon points="86,60 112,66 86,70" fill="'+color+'"/>'
+      +leg(44,72,11,20)+leg(60,72,11,20)+leg(74,70,10,20)+leg(32,70,10,20)
+      +'<ellipse cx="60" cy="62" rx="26" ry="17" fill="'+color+'"/>'
+      +'<circle cx="34" cy="54" r="18" fill="'+d+'"/>'
+      +'<ellipse cx="22" cy="58" rx="15" ry="12" fill="'+color+'"/>'
+      +'<polygon points="20,46 12,26 26,44" fill="'+color+'"/>'
+      +'<polygon points="30,44 26,24 38,42" fill="'+color+'"/>'
+      +'<polygon points="10,58 2,50 16,56" fill="'+color+'"/>'
+      +'<rect x="6" y="58" width="14" height="5" rx="2" fill="'+d+'"/>'
+      +'<circle cx="24" cy="52" r="3.2" fill="#fff"/><circle cx="23" cy="52" r="1.6" fill="#20303a"/>';
+  } else if(fam==="steg"){
+    s='<polygon points="18,60 30,42 34,60" fill="'+d+'"/><polygon points="34,58 46,36 54,58" fill="'+d+'"/>'
+      +'<polygon points="52,58 64,34 74,58" fill="'+d+'"/><polygon points="72,58 84,40 90,60" fill="'+d+'"/>'
+      +'<polygon points="88,60 116,58 116,64 90,68" fill="'+color+'"/>'
+      +'<polygon points="112,54 120,48 114,60" fill="'+d+'"/><polygon points="116,60 122,56 118,66" fill="'+d+'"/>'
+      +leg(40,72,11,20)+leg(56,72,11,20)+leg(72,70,10,20)+leg(30,70,10,20)
+      +'<ellipse cx="58" cy="62" rx="28" ry="16" fill="'+color+'"/>'
+      +'<ellipse cx="24" cy="62" rx="12" ry="9" fill="'+color+'"/>'
+      +'<rect x="10" y="62" width="14" height="5" rx="2" fill="'+d+'"/>'
+      +'<circle cx="22" cy="60" r="2.8" fill="#fff"/><circle cx="21" cy="60" r="1.4" fill="#20303a"/>';
+  } else if(fam==="duckbill"){
+    s='<polygon points="70,56 116,52 72,66" fill="'+color+'"/>'
+      +leg(48,66,10,24)+leg(62,66,10,24)
+      +'<ellipse cx="58" cy="58" rx="24" ry="15" fill="'+color+'"/>'
+      +'<path d="M42,50 L34,32 L42,34 L50,50 Z" fill="'+color+'"/>'
+      +'<ellipse cx="28" cy="34" rx="12" ry="9" fill="'+color+'"/>'
+      +'<polygon points="34,30 52,12 40,32" fill="'+d+'"/>'
+      +'<path d="M12,36 L28,32 L28,42 Z" fill="'+color+'"/>'
+      +'<rect x="12" y="37" width="16" height="4.5" rx="2" fill="'+d+'"/>'
+      +'<circle cx="30" cy="32" r="3" fill="#fff"/><circle cx="29" cy="32" r="1.5" fill="#20303a"/>';
+  } else if(fam==="winged"){
+    s='<polygon points="60,50 10,28 56,60" fill="'+color+'"/>'
+      +'<polygon points="60,50 112,30 66,60" fill="'+d+'"/>'
+      +'<ellipse cx="60" cy="54" rx="12" ry="9" fill="'+color+'"/>'
+      +'<polygon points="60,46 76,32 66,50" fill="'+d+'"/>'
+      +'<polygon points="50,52 30,54 50,58" fill="'+color+'"/>'
+      +'<circle cx="52" cy="50" r="3" fill="#fff"/><circle cx="51" cy="50" r="1.5" fill="#20303a"/>';
+  } else if(fam==="finned"){
+    s='<ellipse cx="62" cy="58" rx="34" ry="14" fill="'+color+'"/>'
+      +'<polygon points="90,52 118,42 96,60" fill="'+color+'"/><polygon points="90,64 118,74 96,58" fill="'+d+'"/>'
+      +'<polygon points="44,68 52,82 58,66" fill="'+d+'"/><polygon points="66,68 74,82 80,66" fill="'+d+'"/>'
+      +'<path d="M28,54 L8,58 L28,64 Z" fill="'+color+'"/>'
+      +'<rect x="10" y="57" width="20" height="4" rx="2" fill="'+d+'"/>'
+      +'<circle cx="34" cy="52" r="3.2" fill="#fff"/><circle cx="33" cy="52" r="1.6" fill="#20303a"/>';
+  } else { s='<ellipse cx="60" cy="56" rx="28" ry="18" fill="'+color+'"/>'+eye; }
+  return '<svg class="dino" viewBox="0 0 122 100" preserveAspectRatio="xMidYMid meet">'+s+'</svg>';
+}
+/* How many dinos are earned: levels cleared + CLEAR words (accuracy) + lots of practice. */
+function dinoUnlockCount(){
+  var lv=(typeof jTotalDone==='function')?jTotalDone():0;
+  var st=S.stats||{}; var clear=st.clear||0, says=st.says||0;
+  var n = lv + Math.floor(clear/8) + Math.floor(says/60);
+  return Math.max(0, Math.min(DINOS.length, n));
+}
+function dinosEarned(){ return DINOS.slice(0, dinoUnlockCount()); }
+function checkDinoUnlock(){
+  var n=dinoUnlockCount(); var seen=S.dinoSeen||0;
+  if(n>seen){
+    var justGot=DINOS[n-1];
+    S.dinoSeen=n; save();
+    if(justGot){ try{ confetti(); }catch(e){} sfx('collect');
+      toast("🦕 New dino! You discovered a "+justGot.n+"!"); }
+  } else if(n<seen){ S.dinoSeen=n; }
+}
+function openDinos(){
+  var earned=dinoUnlockCount();
+  setW('dinoTitle','🦖 '+(S.name||'My')+"'s Dino Park");
+  var sub=document.getElementById('dinoSub'); if(sub) sub.textContent=earned+' of '+DINOS.length+' dinosaurs discovered';
+  var grid=document.getElementById('dinoGrid');
+  if(grid){ grid.innerHTML=DINOS.map(function(dn,i){
+    var got=i<earned;
+    return '<div class="dinocard'+(got?'':' locked')+'">'
+      +'<div class="dinopic">'+(got?dinoSVG(dn.fam,dn.c):dinoSVG(dn.fam,'#33465a'))+(got?'':'<span class="dlock">🔒</span>')+'</div>'
+      +'<div class="dinoname">'+(got?dn.n:'???')+'</div></div>';
+  }).join(''); }
+  var m=document.getElementById('dinoModal'); if(m) m.classList.add('show'); sfx('collect');
+}
+function closeDinos(){ var m=document.getElementById('dinoModal'); if(m) m.classList.remove('show'); }
 
 /* ================= ADVENTURE MODE (grow a pet + beat levels/bosses) =================
    The simple fun front: say words → mine toward a boss → beat it → level clears,
@@ -2125,6 +2340,7 @@ function advStep(){
   S.diamonds+=1; addXp(4); statBlock('MIX', A.current&&A.current.w);
   shake(); sfx('break'); setTimeout(()=>sfx('collect'),100);
   burst(document.getElementById('wordBlock'), ['#5fb04a','#f2c14e','#4fd6d6','#ffffff']);
+  checkDinoUnlock();
   if(!ADV2.inBoss){
     ADV2.wordsDone++; bounceFace('advPetFace');
     if(ADV2.wordsDone>=ADV2.perLevel){ if(ADV2.isBoss) return enterBoss(); return levelDone(); }
@@ -2153,9 +2369,9 @@ function levelDone(){
     advance('world_'+ADV2.wi,'🏆','World Cleared!','You cleared '+w.n+'!');
     toast('🏆 '+w.n+' complete!');
   } else { toast('⭐ Level done!'); }
-  ADV2.on=false; save();
+  ADV2.on=false; save(); checkDinoUnlock();
   speakModel(worldClear?('You cleared '+w.n+'!'):'Level up! Great talking!', false);
-  if(worldClear){ setTimeout(function(){ toast('🏠 A new building — and a villager moved into your town!'); }, 1200); }
+  if(worldClear){ setTimeout(function(){ toast('🏠 A new building appeared in your town!'); }, 1200); }
   if(grew){ setTimeout(function(){ const ps=petStage(); toast('🎉 Your pet grew into a '+ps.n+'!'); speakModel('Wow! Your pet grew into a '+ps.n+'!', false); }, 2000); }
   setTimeout(function(){ go('journey'); }, worldClear?(grew?3200:2400):1500);
 }
@@ -2322,8 +2538,30 @@ function resetProgress(){
 }
 
 /* ================= CLOUD SYNC (Supabase) ================= */
+/* Baked-in project so backup is AUTOMATIC for the family — no setup on any device.
+   Each kid gets their own private save row, keyed by their profile (benji / juju).
+   The anon key is a public client key (safe to embed; the database's row rules
+   are what protect the data). Paste it between the quotes on the line below. */
+const CLOUD_URL = "https://nmwqbtlivqieocakwhrv.supabase.co";
+const CLOUD_KEY = "sb_publishable_5UQgRUXdRHM1CYTdk1VYJQ_XNvWJaFP";
+function cloudBaked(){ return !!(CLOUD_URL && CLOUD_KEY); }
+function cloudCode(){ return (curId||'benji').toLowerCase().replace(/[^a-z0-9_]/g,'')||'benji'; }
+function updateCloudBadge(){
+  var jc=document.getElementById('jCloud');
+  if(jc){ jc.textContent= cloudReady?'☁️✓':'☁️!';
+    jc.style.background= cloudReady?'rgba(60,150,85,.55)':'rgba(214,75,75,.5)';
+    jc.title= cloudReady?'Progress is backed up to the cloud':'Not backed up yet — tap to turn on cloud save'; }
+}
 let supa=null, cloudReady=false, cloudTimer=null;
 function fillCloudFields(){
+  var man=document.getElementById('cloudManual'); if(man) man.style.display=cloudBaked()?'none':'';
+  if(cloudBaked()){
+    var s=document.getElementById('cloudStatus');
+    if(s) s.textContent = cloudReady
+      ? "☁️ Backup is ON automatically — "+(S.name||curId)+"'s progress is saved to the cloud."
+      : "☁️ Backup is built in (connecting…). Nothing to set up here.";
+    return;
+  }
   document.getElementById('supaUrl').value=S.cloud.url||"";
   document.getElementById('supaKey').value=S.cloud.key||"";
   document.getElementById('supaCode').value=S.cloud.code||"";
@@ -2380,12 +2618,32 @@ function cloudPush(){
   },1200);
 }
 async function autoConnectCloud(){
-  if(S.cloud && S.cloud.url && S.cloud.key){
-    const ok=await loadSupaLib();
-    if(ok){ try{ supa=window.supabase.createClient(S.cloud.url,S.cloud.key);
-      const {data}=await supa.from('benji_saves').select('data').eq('code',S.cloud.code).maybeSingle();
-      if(data&&data.data) mergeCloud(data.data); cloudReady=true; }catch(e){} }
-  }
+  // Prefer the baked-in project (zero setup for the family); otherwise use in-app config.
+  var url = cloudBaked()? CLOUD_URL : (S.cloud && S.cloud.url) || "";
+  var key = cloudBaked()? CLOUD_KEY : (S.cloud && S.cloud.key) || "";
+  var code = cloudBaked()? cloudCode() : ((S.cloud && S.cloud.code) || cloudCode());
+  if(!url || !key) return;
+  const ok=await loadSupaLib();
+  if(!ok) return;
+  try{
+    supa=window.supabase.createClient(url,key);
+    S.cloud={url:url,key:key,code:code};
+    const {data}=await supa.from('benji_saves').select('data').eq('code',code).maybeSingle();
+    if(data && data.data) mergeCloud(data.data);
+    cloudReady=true;
+    updateCloudBadge();
+    cloudPush();            // seed the cloud with this device's progress if it's ahead
+  }catch(e){}
+}
+// When a kid is switched, point the cloud at THEIR row and pull their saved progress.
+async function cloudSwitchProfile(){
+  if(!cloudReady || !supa) return;
+  try{
+    var code=cloudCode(); S.cloud.code=code;
+    const {data}=await supa.from('benji_saves').select('data').eq('code',code).maybeSingle();
+    if(data && data.data) mergeCloud(data.data);
+    updateCloudBadge(); cloudPush();
+  }catch(e){}
 }
 
 /* ================= SOUND FX (Web Audio, no files) ================= */
@@ -2551,8 +2809,7 @@ function syncToggleUI(){
   document.querySelectorAll('#slowSeg button').forEach((b,i)=>b.classList.toggle('on',(i===1)===!!S.slow));
   document.querySelectorAll('#musicSeg button').forEach((b,i)=>b.classList.toggle('on',(i===0)===(S.music!==false)));
   document.querySelectorAll('#easySeg button').forEach(b=>b.classList.toggle('on',(b.getAttribute('data-e')==='easy')===!!S.easy));
-  document.querySelectorAll('#coplaySeg button').forEach((b,i)=>b.classList.toggle('on',(i===1)===(S.coplay===true)));
-  document.querySelectorAll('#autoHearSeg button').forEach((b,i)=>b.classList.toggle('on',(i===0)===(S.autoHear===true)));
+  applyCheckMode();
 }
 
 /* ================= INIT ================= */
