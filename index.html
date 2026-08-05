@@ -357,6 +357,14 @@
   .dinoname{font-size:clamp(10px,2vw,12px);color:#fff;margin-top:2px;line-height:1.1;}
   .seg.col{flex-direction:column;gap:6px;}
   .seg.col button{width:100%;text-align:left;padding:10px 12px;}
+  .mcmob{width:100%;height:52px;display:block;image-rendering:pixelated;}
+  .worldfolk .dinowalk .mcmob{height:100%;}
+  .oreshelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;margin:4px 0 8px;}
+  .orecell{text-align:center;background:rgba(255,255,255,.05);border-radius:8px;padding:4px 2px;}
+  .orecell.locked{opacity:.5;}
+  .ore{width:40px;height:40px;image-rendering:pixelated;}
+  .orename{font-size:10px;color:#fff;margin-top:1px;}
+  .gearpic{width:44px;height:44px;image-rendering:pixelated;}
 
   /* ===== LEVEL JOURNEY (map) ===== */
   .jhero{display:flex;align-items:center;gap:12px;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(0,0,0,.25));
@@ -480,6 +488,7 @@
       <div class="hud">
         <span class="chip">🏠 <span id="wBuildings">0</span></span>
         <span class="chip">🦕 <span id="wFolk">0</span></span>
+        <span class="chip">🌍 <span id="biomeName">Overworld</span></span>
       </div>
     </div>
     <div class="worldtitle">
@@ -549,7 +558,7 @@
       <div class="card"><h2>🧭 Follow Along</h2><p>Listen and do the steps.</p><button class="btn gold small" onclick="startDirections()">Play</button></div>
       <div class="card"><h2>🛠️ Make a Sentence</h2><p>Build your own sentences.</p><button class="btn gold small" onclick="startSentence()">Play</button></div>
       <div class="card"><h2>🔥 Warm-Up</h2><p>Wake up your voice.</p><button class="btn small" onclick="startWarmup()">Start</button></div>
-      <div class="card"><h2>🐾 Mobs</h2><p>Say a name to tame it!</p><button class="btn small" onclick="go('mobs')">See</button></div>
+      <div class="card"><h2>🧱 Mob Pen</h2><p>Collect Minecraft mobs!</p><button class="btn small" onclick="go('mobs')">See</button></div>
       <div class="card"><h2>🏰 Sandbox</h2><p>Build with your word-blocks.</p><button class="btn stone small" onclick="go('base')">Open</button></div>
       <div class="card"><h2>📺 Watch &amp; Learn</h2><p>A real speech teacher.</p><button class="btn diamond small" onclick="go('watch')">Watch</button></div>
     </div>
@@ -670,10 +679,11 @@
 
   <!-- MOBS -->
   <section id="mobs" class="screen">
-    <div class="topbar"><button class="backbtn" onclick="go('map')">◀ Map</button></div>
-    <h2>🐾 My Mobs</h2>
-    <p class="tiny">Say a mob's name to tame it. Once tamed, it lives at your base!</p>
-    <div class="grid two" id="mobList"></div>
+    <div class="topbar"><button class="backbtn" onclick="go('journey')">◀ Back</button></div>
+    <h2>🧱 My Mob Pen</h2>
+    <p class="tiny" id="mobSub" style="text-align:center;">0 of 12 mobs found</p>
+    <p class="tiny" style="text-align:center;">Say your words nice and clear to find more mobs! 🐺</p>
+    <div class="dinogrid" id="mobList"></div>
   </section>
 
   <!-- DIRECTIONS -->
@@ -824,8 +834,12 @@
       <div class="statbox"><div class="n" id="tTro">0</div><div class="t">🏆 treasures</div></div>
       <div class="statbox"><div class="n" id="tAni">0</div><div class="t">🐾 animals</div></div>
     </div>
+    <h3 style="text-align:center;">⛏️ My Gear</h3>
+    <div id="gearRow" style="display:flex;gap:18px;justify-content:center;align-items:center;margin-bottom:4px;"></div>
+    <h3 style="text-align:center;">💠 Ores &amp; Gems</h3>
+    <div class="oreshelf" id="oreShelf"></div>
     <h3 style="text-align:center;">My Collection</h3>
-    <div class="trophyshelf" id="treasureShelf" style="max-height:210px;overflow:auto;"></div>
+    <div class="trophyshelf" id="treasureShelf" style="max-height:150px;overflow:auto;"></div>
     <button class="btn small" onclick="closeTreasure()" style="margin-top:12px;">Close</button>
   </div>
 </div>
@@ -1074,7 +1088,7 @@ function freshState(){ return {
   xp:0, level:1, diamonds:0, streak:0, lastPlayed:"", advCount:0,
   advs:{}, base:{}, hotbar:{}, tamed:{}, reps:5, voiceName:"", modelVoice:"Justin",
   sound:true, slow:false, autoMode:true, name:"Benji", easy:false, creations:[], stats:null, music:true, blockBank:0,
-  coplay:false, autoHear:true, feedback:[], checkMode:"coach", dinoSeen:0,
+  coplay:false, autoHear:true, feedback:[], checkMode:"coach", dinoSeen:0, mobSeen:0, oreSeen:0, gearSeen:0,
   world:{name:"",plots:{},mats:{wood:0,stone:0},trophies:[]},
   adv2:{petStage:0}, journey:{done:{}},
   cloud:{url:"",key:"",code:""}
@@ -1406,7 +1420,7 @@ function mineIt(){
   if(S.diamonds>=10 && !S.advs.dia10) advance("dia10","💎","Diamonds!","You collected 10 diamonds!");
   toast(pick(["Nice mining! +"+gain+"💎","Crisp! +"+gain+"💎","BOOM! Block broken!","Great job, Benji!"]));
   playCrack();
-  save(); checkDinoUnlock();
+  save(); checkUnlocks();
   A.idx++;
   if(A.mined>=A.goal) return finishSet();
   loadWord();
@@ -1974,9 +1988,13 @@ function renderWorld(){
   ensureWorld();
   setW('worldName', S.world.name);
   const buildings=townBuildings();
-  const tamed=Object.keys(S.tamed||{}).filter(k=>S.tamed[k]);
+  const dinos=dinosEarned(), mobs=mobsEarned();
   setW('wBuildings', buildings);
-  setW('wFolk', dinosEarned().length + tamed.length + 1); // earned dinos + tamed mobs + pet
+  setW('wFolk', dinos.length + mobs.length + 1); // earned dinos + mobs + pet
+  /* biome background shifts as worlds are cleared */
+  const scene=document.querySelector('#world .worldscene'); const bi=biome();
+  if(scene){ scene.style.background='linear-gradient(#a9d8f0 0%, '+bi.sky+' 42%, '+bi.grnd+' 42%, '+bi.grnd+' 100%)'; }
+  setW('biomeName', bi.n);
   /* the town */
   const grid=document.getElementById('worldGrid'); if(grid){ grid.innerHTML="";
     for(let i=0;i<WORLD_PLOTS;i++){
@@ -1995,10 +2013,11 @@ function renderWorld(){
     hero.innerHTML=(p&&p.avatar&&AVATARS[p.avatar])?avatarSVG(p.avatar):('<span style="font-size:38px;">'+(p?p.emoji:'🧑')+'</span>');
     folk.appendChild(hero);
     const pet=document.createElement('div'); pet.className="vil"; pet.textContent=petStage().e; folk.appendChild(pet);
-    const dinos=dinosEarned(); const showD=dinos.slice(Math.max(0,dinos.length-8)); // roam the most recent up to 8
+    const showD=dinos.slice(Math.max(0,dinos.length-4)); // a few dinos roam
     showD.forEach(dn=>{ const d=document.createElement('div'); d.className="dinowalk"; d.title=dn.n; d.innerHTML=dinoSVG(dn.fam,dn.c); folk.appendChild(d); });
-    tamed.forEach(name=>{ const m=MOBS.find(x=>x.name===name); if(m){ const d=document.createElement('div'); d.className="mob"; d.textContent=m.e; folk.appendChild(d); } });
-    if(!dinos.length && !tamed.length){ const l=document.createElement('div'); l.className="lbl2"; l.textContent="Play and say your words clearly — dinosaurs will come live here! 🦕"; folk.appendChild(l); }
+    const showM=mobs.slice(Math.max(0,mobs.length-4)); // a few mobs roam
+    showM.forEach(mb=>{ const d=document.createElement('div'); d.className="dinowalk"; d.title=mb.n; d.innerHTML=mcMobSVG(mb,false); folk.appendChild(d); });
+    if(!dinos.length && !mobs.length){ const l=document.createElement('div'); l.className="lbl2"; l.textContent="Play and say your words clearly — dinos and mobs will come live here! 🦕🧱"; folk.appendChild(l); }
   }
   /* decorate menu (free) */
   const menu=document.getElementById('decoMenu'); if(menu){ menu.innerHTML="";
@@ -2045,13 +2064,19 @@ function openTreasure(){
   setW('tDia', S.diamonds||0);
   setW('tStars', (typeof jTotalDone==='function')?jTotalDone():0);
   setW('tTro', (S.world.treasures||[]).length);
-  const tamed=Object.keys(S.tamed||{}).filter(k=>S.tamed[k]);
-  setW('tAni', tamed.length);
+  setW('tAni', dinosEarned().length + mobsEarned().length);
+  // Gear
+  var gr=document.getElementById('gearRow'); if(gr){ var t=gearTier();
+    gr.innerHTML='<div style="text-align:center;color:#fff;font-size:12px;">'+pickaxeSVG(t)+'<div>'+GEAR_TIERS[t].n+' Pickaxe</div></div>'
+      +'<div style="text-align:center;color:#fff;font-size:12px;">'+swordSVG(t)+'<div>'+GEAR_TIERS[t].n+' Sword</div></div>'; }
+  // Ores
+  var os=document.getElementById('oreShelf'); if(os){ var oe=oreUnlockCount();
+    os.innerHTML=ORES.map(function(o,i){ var got=i<oe;
+      return '<div class="orecell'+(got?'':' locked')+'">'+oreSVG(o.c,!got)+'<div class="orename">'+(got?o.n:'???')+'</div></div>'; }).join(''); }
   const shelf=document.getElementById('treasureShelf');
   if(shelf){
     const items=[].concat(
       S.world.treasures||[],
-      tamed.map(n=>{ const m=MOBS.find(x=>x.name===n); return m?m.e:'🐾'; }),
       Object.keys(S.advs||{}).map(()=>'🏅')
     );
     shelf.innerHTML = items.length ? items.map(e=>'<span class="tr">'+e+'</span>').join('')
@@ -2222,6 +2247,73 @@ function openDinos(){
 }
 function closeDinos(){ var m=document.getElementById('dinoModal'); if(m) m.classList.remove('show'); }
 
+/* ================= MINECRAFT MOBS (Benji's collection — blocky/authentic) =================
+   Earned by playing (esp. saying words clearly). Rendered as pixel art so they look like
+   real Minecraft. They live in the Mob Pen and roam the town alongside the pet + dinos. */
+function _px(r,locked){ return '<rect x="'+r[0]+'" y="'+r[1]+'" width="'+r[2]+'" height="'+r[3]+'" fill="'+(locked?'#33465a':r[4])+'"/>'; }
+const MC_MOBS=[
+  {id:'creeper',n:'Creeper',px:[[3,2,10,12,'#6cbb3c'],[3,2,10,3,'#7ecb46'],[5,5,2,2,'#1c130b'],[9,5,2,2,'#1c130b'],[7,7,2,2,'#1c130b'],[6,9,1,2,'#1c130b'],[9,9,1,2,'#1c130b'],[7,9,2,1,'#1c130b']]},
+  {id:'zombie',n:'Zombie',px:[[3,2,10,12,'#4d7a3f'],[3,2,10,3,'#588a48'],[5,6,2,2,'#22331b'],[9,6,2,2,'#22331b'],[5,10,6,1,'#22331b']]},
+  {id:'skeleton',n:'Skeleton',px:[[3,2,10,12,'#d7d3c6'],[3,2,10,3,'#e6e2d6'],[5,6,2,2,'#2a2a2a'],[9,6,2,2,'#2a2a2a'],[5,10,6,1,'#8a877c'],[6,10,1,1,'#d7d3c6'],[8,10,1,1,'#d7d3c6'],[10,10,1,1,'#d7d3c6']]},
+  {id:'enderman',n:'Enderman',px:[[6,7,4,7,'#0e0c14'],[5,2,6,5,'#0e0c14'],[5,4,2,1,'#c86bd8'],[9,4,2,1,'#c86bd8']]},
+  {id:'spider',n:'Spider',px:[[2,7,2,1,'#2a1d17'],[12,7,2,1,'#2a1d17'],[2,10,2,1,'#2a1d17'],[12,10,2,1,'#2a1d17'],[4,6,8,6,'#37271f'],[5,4,6,4,'#2a1d17'],[5,5,2,2,'#d84b4b'],[9,5,2,2,'#d84b4b']]},
+  {id:'slime',n:'Slime',px:[[3,3,10,10,'#5fbf4f'],[3,3,10,3,'#78d162'],[5,7,2,2,'#2b5a24'],[9,7,2,2,'#2b5a24'],[6,10,4,1,'#2b5a24']]},
+  {id:'villager',n:'Villager',px:[[4,9,8,5,'#6b4a2a'],[3,9,1,4,'#c79a6e'],[12,9,1,4,'#c79a6e'],[4,2,8,7,'#c79a6e'],[5,3,6,1,'#5a4327'],[7,4,2,5,'#a97e56'],[5,4,1,2,'#3a2a1c'],[10,4,1,2,'#3a2a1c']]},
+  {id:'golem',n:'Iron Golem',px:[[3,9,10,5,'#98988f'],[4,2,8,7,'#a7a79e'],[7,4,2,4,'#8a8a80'],[5,5,1,1,'#3a3a3a'],[10,5,1,1,'#3a3a3a'],[4,10,2,1,'#6a8a5a']]},
+  {id:'bee',n:'Bee',px:[[3,4,2,2,'#e8f2ff'],[11,4,2,2,'#e8f2ff'],[4,5,8,7,'#f2c14e'],[4,7,8,1,'#3a2f1a'],[4,10,8,1,'#3a2f1a'],[5,5,1,2,'#20140c'],[10,5,1,2,'#20140c'],[7,12,2,1,'#3a2f1a']]},
+  {id:'fox',n:'Fox',px:[[3,2,2,2,'#e08a3c'],[11,2,2,2,'#e08a3c'],[4,3,8,6,'#e08a3c'],[4,7,8,4,'#f2ede4'],[6,5,1,1,'#2a1d17'],[9,5,1,1,'#2a1d17'],[7,8,2,1,'#2a1d17']]},
+  {id:'wolf',n:'Wolf',px:[[4,2,2,2,'#b8b8b8'],[10,2,2,2,'#b8b8b8'],[4,3,8,8,'#c2c2c2'],[6,8,4,3,'#e6e6e6'],[5,5,1,2,'#2a2a2a'],[10,5,1,2,'#2a2a2a'],[7,9,2,1,'#1a1a1a']]},
+  {id:'axolotl',n:'Axolotl',px:[[2,4,2,1,'#ff7fb0'],[2,6,2,1,'#ff7fb0'],[12,4,2,1,'#ff7fb0'],[12,6,2,1,'#ff7fb0'],[4,4,8,7,'#f0a5c8'],[5,6,1,1,'#2a1d24'],[10,6,1,1,'#2a1d24'],[6,9,4,1,'#d47fa0']]}
+];
+function mcMobSVG(mob,locked){ return '<svg class="mcmob" viewBox="0 0 16 16" shape-rendering="crispEdges" preserveAspectRatio="xMidYMid meet">'+mob.px.map(function(r){return _px(r,locked);}).join('')+'</svg>'; }
+function mobUnlockCount(){ var st=S.stats||{}; var pts=Math.floor(((st.clear||0)+(st.says||0))/16)+worldsCompleted(); return Math.max(0,Math.min(MC_MOBS.length,pts)); }
+function mobsEarned(){ return MC_MOBS.slice(0, mobUnlockCount()); }
+function checkMobUnlock(){ var n=mobUnlockCount(), seen=S.mobSeen||0;
+  if(n>seen){ var g=MC_MOBS[n-1]; S.mobSeen=n; save(); if(g){ try{confetti();}catch(e){} sfx('collect'); toast("🧱 New mob! You found a "+g.n+"!"); } }
+  else if(n<seen){ S.mobSeen=n; } }
+
+/* ================= ORES & GEMS (rarity chase) ================= */
+const ORES=[
+  {id:'coal',n:'Coal',c:'#2b2b2b'},{id:'copper',n:'Copper',c:'#c0764a'},{id:'iron',n:'Iron',c:'#d8cbb8'},
+  {id:'redstone',n:'Redstone',c:'#c62a24'},{id:'lapis',n:'Lapis',c:'#2a52be'},{id:'gold',n:'Gold',c:'#f2c14e'},
+  {id:'diamond',n:'Diamond',c:'#5ff0e0'},{id:'emerald',n:'Emerald',c:'#3fd06a'},{id:'netherite',n:'Netherite',c:'#5a4d54'}
+];
+function oreSVG(color,locked){ var base=locked?'#33465a':'#8a8a86', hi=locked?'#3d5266':'#9d9d98', gem=locked?'#2a3947':color;
+  var s='<rect x="1" y="1" width="14" height="14" rx="1" fill="'+base+'"/><rect x="1" y="1" width="14" height="3" fill="'+hi+'"/>';
+  var pts=[[4,4],[9,3],[6,7],[10,8],[4,10],[11,11]];
+  pts.forEach(function(p){ s+='<rect x="'+p[0]+'" y="'+p[1]+'" width="2" height="2" fill="'+gem+'"/>'; });
+  return '<svg class="ore" viewBox="0 0 16 16" shape-rendering="crispEdges" preserveAspectRatio="xMidYMid meet">'+s+'</svg>'; }
+function oreUnlockCount(){ var st=S.stats||{}; var pts=(st.clear||0)*2+Math.floor((st.says||0)/2);
+  var th=[2,6,12,20,32,48,68,92,120]; var n=0; for(var i=0;i<th.length;i++){ if(pts>=th[i]) n++; } return Math.min(ORES.length,n); }
+function oresEarned(){ return ORES.slice(0, oreUnlockCount()); }
+function checkOreUnlock(){ var n=oreUnlockCount(), seen=S.oreSeen||0;
+  if(n>seen){ var g=ORES[n-1]; S.oreSeen=n; save(); if(g){ sfx('collect'); toast("💠 You mined "+g.n+"!"); } }
+  else if(n<seen){ S.oreSeen=n; } }
+
+/* ================= GEAR (pickaxe + sword upgrade with rank) ================= */
+const GEAR_TIERS=[{n:'Wood',c:'#9c6b3f'},{n:'Stone',c:'#8a8a86'},{n:'Iron',c:'#d8cbb8'},{n:'Gold',c:'#f2c14e'},{n:'Diamond',c:'#5ff0e0'},{n:'Netherite',c:'#5a4d54'}];
+function gearTier(){ var t=worldsCompleted()+Math.floor(jTotalDone()/3); return Math.max(0,Math.min(GEAR_TIERS.length-1,t)); }
+function pickaxeSVG(tier){ var c=GEAR_TIERS[tier].c;
+  return '<svg class="gearpic" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="3" width="12" height="2" fill="'+c+'"/><rect x="2" y="3" width="2" height="3" fill="'+c+'"/><rect x="12" y="3" width="2" height="3" fill="'+c+'"/><rect x="7" y="5" width="2" height="9" fill="#7a5230"/></svg>'; }
+function swordSVG(tier){ var c=GEAR_TIERS[tier].c;
+  return '<svg class="gearpic" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="7" y="1" width="2" height="9" fill="'+c+'"/><rect x="5" y="9" width="6" height="2" fill="#7a5230"/><rect x="7" y="11" width="2" height="3" fill="#7a5230"/></svg>'; }
+function checkGearUp(){ var t=gearTier(), seen=S.gearSeen||0;
+  if(t>seen){ S.gearSeen=t; save(); sfx('collect'); toast("⛏️ Gear up! You got a "+GEAR_TIERS[t].n+" Pickaxe!"); }
+  else if(t<seen){ S.gearSeen=t; } }
+
+/* one call that checks every collection after a win */
+function checkUnlocks(){ try{ checkDinoUnlock(); }catch(e){} try{ checkMobUnlock(); }catch(e){} try{ checkOreUnlock(); }catch(e){} try{ checkGearUp(); }catch(e){} }
+
+/* ================= BIOME (town background shifts as worlds are cleared) ================= */
+const BIOMES=[
+  {n:'Overworld',sky:'#7ec0ee',grnd:'#7cc15a'},
+  {n:'Forest',sky:'#8fd0d6',grnd:'#5aa64a'},
+  {n:'Sunset Peaks',sky:'#e8a86b',grnd:'#8a6a44'},
+  {n:'The Nether',sky:'#5a1e1e',grnd:'#7a2b22'},
+  {n:'The End',sky:'#1b1630',grnd:'#3a3358'}
+];
+function biome(){ return BIOMES[Math.max(0,Math.min(BIOMES.length-1,worldsCompleted()))]; }
+
 /* ================= ADVENTURE MODE (grow a pet + beat levels/bosses) =================
    The simple fun front: say words → mine toward a boss → beat it → level clears,
    your pet grows, and you earn blocks for your Minecraft World. Reuses the guided
@@ -2340,7 +2432,7 @@ function advStep(){
   S.diamonds+=1; addXp(4); statBlock('MIX', A.current&&A.current.w);
   shake(); sfx('break'); setTimeout(()=>sfx('collect'),100);
   burst(document.getElementById('wordBlock'), ['#5fb04a','#f2c14e','#4fd6d6','#ffffff']);
-  checkDinoUnlock();
+  checkUnlocks();
   if(!ADV2.inBoss){
     ADV2.wordsDone++; bounceFace('advPetFace');
     if(ADV2.wordsDone>=ADV2.perLevel){ if(ADV2.isBoss) return enterBoss(); return levelDone(); }
@@ -2369,7 +2461,7 @@ function levelDone(){
     advance('world_'+ADV2.wi,'🏆','World Cleared!','You cleared '+w.n+'!');
     toast('🏆 '+w.n+' complete!');
   } else { toast('⭐ Level done!'); }
-  ADV2.on=false; save(); checkDinoUnlock();
+  ADV2.on=false; save(); checkUnlocks();
   speakModel(worldClear?('You cleared '+w.n+'!'):'Level up! Great talking!', false);
   if(worldClear){ setTimeout(function(){ toast('🏠 A new building appeared in your town!'); }, 1200); }
   if(grew){ setTimeout(function(){ const ps=petStage(); toast('🎉 Your pet grew into a '+ps.n+'!'); speakModel('Wow! Your pet grew into a '+ps.n+'!', false); }, 2000); }
@@ -2420,16 +2512,15 @@ function renderProgress(){
 
 /* ================= MOBS ================= */
 function renderMobs(){
-  const list=document.getElementById('mobList'); list.innerHTML="";
-  MOBS.forEach(m=>{
-    const tamed=S.tamed[m.name];
-    const c=document.createElement('div'); c.className="card"+(tamed?"":"");
-    c.innerHTML='<div style="font-size:40px;text-align:center;">'+m.e+'</div><div class="lbl" style="text-align:center;color:#fff;">'+m.name.toUpperCase()+'</div>';
-    const b=document.createElement('button'); b.className="btn small "+(tamed?"stone":"gold");
-    b.textContent=tamed?"✔ Tamed":"🔊 Say the name";
-    b.onclick=()=>{ speakModel(m.name,true); if(!tamed){ setTimeout(()=>tameMob(m),700);} };
-    c.appendChild(b); list.appendChild(c);
-  });
+  var earned=mobUnlockCount();
+  var sub=document.getElementById('mobSub'); if(sub) sub.textContent=earned+' of '+MC_MOBS.length+' mobs found';
+  var list=document.getElementById('mobList'); if(!list) return;
+  list.innerHTML=MC_MOBS.map(function(m,i){
+    var got=i<earned;
+    return '<div class="dinocard'+(got?'':' locked')+'">'
+      +'<div class="dinopic">'+mcMobSVG(m,!got)+(got?'':'<span class="dlock">🔒</span>')+'</div>'
+      +'<div class="dinoname">'+(got?m.n:'???')+'</div></div>';
+  }).join('');
 }
 function tameMob(m){
   sfx('tame');

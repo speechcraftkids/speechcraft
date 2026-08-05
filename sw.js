@@ -1,6 +1,6 @@
 /* SpeechCraft service worker — makes the app installable & offline-capable.
    Same-origin app shell is cached (cache-first); cross-origin voice/fonts go to network. */
-const CACHE = 'speechcraft-v22';
+const CACHE = 'speechcraft-v23';
 const ASSETS = [
   './',
   './index.html',
